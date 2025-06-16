@@ -96,7 +96,6 @@ class _TextInputState extends State<TextInput> {
   }
 
   void _toggleKeyboard() {
-    print("status: $_isKeyboardVisible");
     setState(() {
       _isKeyboardVisible = !_isKeyboardVisible;
     });
@@ -105,17 +104,45 @@ class _TextInputState extends State<TextInput> {
       _controller,
       _focusNode,
       _keyboardButtonKey,
-      show: _isKeyboardVisible,
+      // show: _isKeyboardVisible,
+      onVisibilityChanged: (bool visible) {
+        // This fires **every** time the overlay shows or hides
+        setState(() => _isKeyboardVisible = visible);
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return DefaultInput(
-      isRequired: widget.isRequired,
-      child: Row(
-        children: [
-          Expanded(
+    return Row(
+      children: [
+        Expanded(
+          child: DefaultInput(
+            keyboard: (widget.useCustomKeyboard)
+                ? SizedBox(
+                    width: 30,
+                    child: Row(
+                      children: [
+                        if (widget.icon != null) widget.icon!,
+                        GestureDetector(
+                          key: _keyboardButtonKey,
+                          onTap: () {
+                            _toggleKeyboard();
+                          },
+                          child: Image.asset(
+                            _isKeyboardVisible
+                                ? "assets/active_keyboard.png"
+                                : "assets/passive_keyboard.png",
+                            package: 'input_virtual_keyboard',
+                            width: 24,
+                            height: 24,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : null,
+            isRequired: widget.isRequired,
             child: FormBuilderTextField(
               focusNode: _focusNode,
               autofocus: widget.autofocus,
@@ -145,31 +172,8 @@ class _TextInputState extends State<TextInput> {
               onTap: widget.useCustomKeyboard ? _toggleKeyboard : null,
             ),
           ),
-          if (widget.useCustomKeyboard)
-            SizedBox(
-              width: 30,
-              child: Row(
-                children: [
-                  if (widget.icon != null) widget.icon!,
-                  InkWell(
-                    key: _keyboardButtonKey,
-                    onTap: () {
-                      _toggleKeyboard();
-                    },
-                    child: Image.asset(
-                      _isKeyboardVisible
-                          ? "assets/active_keyboard.png"
-                          : "assets/passive_keyboard.png",
-                      package: 'input_virtual_keyboard',
-                      width: 24,
-                      height: 24,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 class DefaultInput extends StatefulWidget {
   Widget child;
   bool isRequired;
-  DefaultInput({this.isRequired = false, required this.child, Key? key})
+  Widget? keyboard;
+  DefaultInput(
+      {this.isRequired = false, this.keyboard, required this.child, Key? key})
       : super(key: key);
 
   @override
@@ -15,18 +17,28 @@ class _DefaultInputState extends State<DefaultInput> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      alignment: Alignment.centerLeft,
-      height: 35,
       width: double.infinity,
+      height: 35,
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        border: (widget.isRequired)
-            ? Border.all(color: Colors.red)
-            : Border.all(width: 0, color: Colors.grey),
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          widget.keyboard ?? const SizedBox(),
+          Expanded(
+            child: Container(
+              alignment: Alignment.centerLeft,
+              decoration: BoxDecoration(
+                border: (widget.isRequired)
+                    ? Border.all(color: Colors.red)
+                    : Border.all(width: 0, color: Colors.grey),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: widget.child,
+            ),
+          ),
+        ],
       ),
-      child: widget.child,
     );
   }
 }

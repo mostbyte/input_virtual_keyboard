@@ -15,7 +15,6 @@ class FullKeyboard extends StatefulWidget {
   final List<KeyboardLanguage> supportedLanguages;
   final KeyboardLanguage initialLanguage;
   final Function(KeyboardLanguage)? onLanguageChanged;
-  final bool isNumberMode;
 
   const FullKeyboard({
     Key? key,
@@ -31,7 +30,6 @@ class FullKeyboard extends StatefulWidget {
     ],
     this.initialLanguage = KeyboardLanguage.english,
     this.onLanguageChanged,
-    this.isNumberMode = false,
   }) : super(key: key);
 
   @override
@@ -41,11 +39,12 @@ class FullKeyboard extends StatefulWidget {
 class _FullKeyboardState extends State<FullKeyboard> {
   late KeyboardLanguage _currentLanguage;
   bool _isShiftActive = false;
+  bool _isNumberMode = false;
 
   final List<List<String>> _numberKeys = [
     ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-    ['@', '#', '\$', '_', '&', '-', '+', '(', ')', '/'],
-    ['*', '"', '\'', ':', ';', '!', '?', ',', '.', '='],
+    ['@', '#', '\$', '&', '+', '(', ')', '/', '_', '*'],
+    ['"', '\'', ':', ';', '!', '?', ',', '.', '='],
   ];
 
   @override
@@ -69,6 +68,12 @@ class _FullKeyboardState extends State<FullKeyboard> {
     });
   }
 
+  void _toggleNumeric() {
+    setState(() {
+      _isNumberMode = !_isNumberMode;
+    });
+  }
+
   String _getLanguageText() {
     switch (_currentLanguage) {
       case KeyboardLanguage.english:
@@ -81,7 +86,7 @@ class _FullKeyboardState extends State<FullKeyboard> {
   }
 
   List<List<String>> _getCurrentLayoutKeys() {
-    if (widget.isNumberMode) {
+    if (_isNumberMode) {
       return _numberKeys;
     }
 
@@ -109,7 +114,7 @@ class _FullKeyboardState extends State<FullKeyboard> {
 
   Widget _buildKey(String text, {String? topText, bool isActive = false}) {
     final displayText =
-        _isShiftActive && !widget.isNumberMode ? text.toUpperCase() : text;
+        _isShiftActive && !_isNumberMode ? text.toUpperCase() : text;
     return Padding(
       padding: const EdgeInsets.all(4.0),
       child: Material(
@@ -118,9 +123,7 @@ class _FullKeyboardState extends State<FullKeyboard> {
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
           onTap: () => widget.onKeyPressed(
-              _isShiftActive && !widget.isNumberMode
-                  ? text.toUpperCase()
-                  : text),
+              _isShiftActive && !_isNumberMode ? text.toUpperCase() : text),
           child: Container(
             width: 56,
             height: 64,
@@ -184,6 +187,7 @@ class _FullKeyboardState extends State<FullKeyboard> {
 
     return Container(
       // width: 660,
+      margin: const EdgeInsets.all(8),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
           color: const Color(0xFF1A1B1E),
@@ -208,7 +212,7 @@ class _FullKeyboardState extends State<FullKeyboard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (!widget.isNumberMode)
+              if (!_isNumberMode)
                 _buildSpecialKey(
                   onTap: _toggleShift,
                   backgroundColor: _isShiftActive ? Colors.white : null,
@@ -240,6 +244,17 @@ class _FullKeyboardState extends State<FullKeyboard> {
                 ),
               ),
               _buildSpecialKey(
+                onTap: _toggleNumeric,
+                child: Text(
+                  "123*/",
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              _buildSpecialKey(
                 onTap: widget.onLeftArrow ?? () {},
                 child: const Icon(Icons.keyboard_arrow_left,
                     color: Colors.white70),
@@ -255,7 +270,6 @@ class _FullKeyboardState extends State<FullKeyboard> {
                 child: const Icon(Icons.space_bar, color: Colors.white70),
               ),
               _buildKey('-'),
-              _buildKey('_'),
               _buildSpecialKey(
                 width: 2,
                 backgroundColor: Colors.blue[800],

@@ -67,7 +67,6 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             SizedBox(height: 200),
             SizedBox(width: 200, child: TextInput(name: "", nextAction: false)),
-            SizedBox(width: 200, child: TextInput(name: "", nextAction: false)),
 
             // NumberKeyboard(
             //   onKeyPressed: (String value) {
