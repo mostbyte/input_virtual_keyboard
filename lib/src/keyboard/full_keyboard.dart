@@ -183,7 +183,7 @@ class _FullKeyboardState extends State<FullKeyboard> {
     final layoutKeys = _getCurrentLayoutKeys();
 
     return Container(
-      width: 660,
+      // width: 660,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
           color: const Color(0xFF1A1B1E),

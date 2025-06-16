@@ -3,6 +3,26 @@ import 'full_keyboard.dart';
 
 class KeyboardOverlay {
   static OverlayEntry? _overlayEntry;
+  static Offset _position = Offset.zero;
+  static bool _isVisible = false;
+
+  static void toggleKeyboard(
+    BuildContext context,
+    TextEditingController controller,
+    FocusNode focusNode,
+    GlobalKey keyboardButtonKey, {
+    bool? show,
+  }) {
+    if (show ?? !_isVisible) {
+      showKeyboard(context, controller, focusNode, keyboardButtonKey);
+    } else {
+      if (_overlayEntry != null) {
+        _overlayEntry?.remove();
+        _overlayEntry = null;
+        _isVisible = false;
+      }
+    }
+  }
 
   static void showKeyboard(
     BuildContext context,
@@ -20,6 +40,11 @@ class KeyboardOverlay {
     if (renderBox == null) return;
 
     final buttonPosition = renderBox.localToGlobal(Offset.zero);
+    // Initialize the position
+    _position = Offset(
+      buttonPosition.dx - 400,
+      buttonPosition.dy + renderBox.size.height + 10,
+    );
 
     OverlayState? overlayState = Overlay.of(context);
     _overlayEntry = OverlayEntry(
@@ -29,105 +54,111 @@ class KeyboardOverlay {
           child: Stack(
             children: [
               // Transparent overlay to handle taps outside keyboard
-              Positioned(
+              Positioned.fill(
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () {
-                    // hideKeyboard();
-                    // focusNode.unfocus();
+                    hideKeyboard();
+                    focusNode.unfocus();
                   },
                   child: Container(
                     color: Colors.transparent,
                   ),
                 ),
               ),
-              // Keyboard
+              // Draggable Keyboard
               Positioned(
-                left: buttonPosition.dx - 400,
-                top: buttonPosition.dy + renderBox.size.height + 10,
-                child: FullKeyboard(
-                  onKeyPressed: (String text) {
-                    final currentText = controller.text;
-                    final textSelection = controller.selection;
-                    final newText = currentText.replaceRange(
-                      textSelection.start,
-                      textSelection.end,
-                      text,
-                    );
-                    final myTextLength = text.length;
-                    controller.text = newText;
-                    controller.selection = textSelection.copyWith(
-                      baseOffset: textSelection.start + myTextLength,
-                      extentOffset: textSelection.start + myTextLength,
-                    );
+                left: _position.dx,
+                top: _position.dy,
+                child: GestureDetector(
+                  onPanUpdate: (details) {
+                    _position += details.delta;
+                    _overlayEntry?.markNeedsBuild();
                   },
-                  onBackspace: () {
-                    final currentText = controller.text;
-                    final textSelection = controller.selection;
-                    final selectionLength =
-                        textSelection.end - textSelection.start;
+                  child: Material(
+                    elevation: 8,
+                    child: FullKeyboard(
+                      onKeyPressed: (String text) {
+                        final currentText = controller.text;
+                        final textSelection = controller.selection;
+                        final newText = currentText.replaceRange(
+                          textSelection.start,
+                          textSelection.end,
+                          text,
+                        );
+                        final myTextLength = text.length;
+                        controller.text = newText;
+                        controller.selection = textSelection.copyWith(
+                          baseOffset: textSelection.start + myTextLength,
+                          extentOffset: textSelection.start + myTextLength,
+                        );
+                      },
+                      onBackspace: () {
+                        final currentText = controller.text;
+                        final textSelection = controller.selection;
+                        final selectionLength =
+                            textSelection.end - textSelection.start;
 
-                    // There is a selection
-                    if (selectionLength > 0) {
-                      final newText = currentText.replaceRange(
-                        textSelection.start,
-                        textSelection.end,
-                        '',
-                      );
-                      controller.text = newText;
-                      controller.selection = textSelection.copyWith(
-                        baseOffset: textSelection.start,
-                        extentOffset: textSelection.start,
-                      );
-                      return;
-                    }
+                        if (selectionLength > 0) {
+                          final newText = currentText.replaceRange(
+                            textSelection.start,
+                            textSelection.end,
+                            '',
+                          );
+                          controller.text = newText;
+                          controller.selection = textSelection.copyWith(
+                            baseOffset: textSelection.start,
+                            extentOffset: textSelection.start,
+                          );
+                          return;
+                        }
 
-                    // The cursor is at the beginning
-                    if (textSelection.start == 0) {
-                      return;
-                    }
+                        if (textSelection.start == 0) {
+                          return;
+                        }
 
-                    // Delete one character
-                    final previousCodeUnit =
-                        currentText.codeUnitAt(textSelection.start - 1);
-                    final offset = _isUtf16Surrogate(previousCodeUnit) ? 2 : 1;
-                    final newText = currentText.replaceRange(
-                      textSelection.start - offset,
-                      textSelection.start,
-                      '',
-                    );
-                    controller.text = newText;
-                    controller.selection = textSelection.copyWith(
-                      baseOffset: textSelection.start - offset,
-                      extentOffset: textSelection.start - offset,
-                    );
-                  },
-                  onSubmit: () {
-                    hideKeyboard();
-                    focusNode.unfocus();
-                  },
-                  onLeftArrow: () {
-                    final currentText = controller.text;
-                    final textSelection = controller.selection;
-                    final newOffset = textSelection.start - 1;
-                    if (newOffset >= 0) {
-                      controller.selection = textSelection.copyWith(
-                        baseOffset: newOffset,
-                        extentOffset: newOffset,
-                      );
-                    }
-                  },
-                  onRightArrow: () {
-                    final currentText = controller.text;
-                    final textSelection = controller.selection;
-                    final newOffset = textSelection.start + 1;
-                    if (newOffset <= currentText.length) {
-                      controller.selection = textSelection.copyWith(
-                        baseOffset: newOffset,
-                        extentOffset: newOffset,
-                      );
-                    }
-                  },
+                        final previousCodeUnit =
+                            currentText.codeUnitAt(textSelection.start - 1);
+                        final offset =
+                            _isUtf16Surrogate(previousCodeUnit) ? 2 : 1;
+                        final newText = currentText.replaceRange(
+                          textSelection.start - offset,
+                          textSelection.start,
+                          '',
+                        );
+                        controller.text = newText;
+                        controller.selection = textSelection.copyWith(
+                          baseOffset: textSelection.start - offset,
+                          extentOffset: textSelection.start - offset,
+                        );
+                      },
+                      onSubmit: () {
+                        hideKeyboard();
+                        focusNode.unfocus();
+                      },
+                      onLeftArrow: () {
+                        final textSelection = controller.selection;
+                        final newOffset = textSelection.start - 1;
+                        if (newOffset >= 0) {
+                          controller.selection = textSelection.copyWith(
+                            baseOffset: newOffset,
+                            extentOffset: newOffset,
+                          );
+                        }
+                      },
+                      onRightArrow: () {
+                        final currentText = controller.text;
+                        final textSelection = controller.selection;
+                        final newOffset = textSelection.start + 1;
+                        if (newOffset <= currentText.length) {
+                          controller.selection = textSelection.copyWith(
+                            baseOffset: newOffset,
+                            extentOffset: newOffset,
+                          );
+                        }
+                      },
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -140,10 +171,10 @@ class KeyboardOverlay {
   }
 
   static void hideKeyboard() {
-    if (_overlayEntry != null) {
-      _overlayEntry?.remove();
-      _overlayEntry = null;
-    }
+    // if (_overlayEntry != null) {
+    //   _overlayEntry?.remove();
+    //   _overlayEntry = null;
+    // }
   }
 
   static bool _isUtf16Surrogate(int value) {

@@ -96,20 +96,17 @@ class _TextInputState extends State<TextInput> {
   }
 
   void _toggleKeyboard() {
-    if (_isKeyboardVisible) {
-      KeyboardOverlay.hideKeyboard();
-      _focusNode.unfocus();
-      setState(() {
-        _isKeyboardVisible = false;
-      });
-    } else {
-      _focusNode.requestFocus();
-      KeyboardOverlay.showKeyboard(
-          context, _controller, _focusNode, _keyboardButtonKey);
-      setState(() {
-        _isKeyboardVisible = true;
-      });
-    }
+    print("status: $_isKeyboardVisible");
+    setState(() {
+      _isKeyboardVisible = !_isKeyboardVisible;
+    });
+    KeyboardOverlay.toggleKeyboard(
+      context,
+      _controller,
+      _focusNode,
+      _keyboardButtonKey,
+      show: _isKeyboardVisible,
+    );
   }
 
   @override
@@ -154,9 +151,11 @@ class _TextInputState extends State<TextInput> {
               child: Row(
                 children: [
                   if (widget.icon != null) widget.icon!,
-                  GestureDetector(
+                  InkWell(
                     key: _keyboardButtonKey,
-                    onTap: _toggleKeyboard,
+                    onTap: () {
+                      _toggleKeyboard();
+                    },
                     child: Image.asset(
                       _isKeyboardVisible
                           ? "assets/active_keyboard.png"
