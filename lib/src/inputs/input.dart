@@ -37,43 +37,47 @@ class Input extends StatefulWidget {
   final Widget? suffixWidget;
   final Color? suffixBackground;
   final Widget? suffixIcon;
+  final bool obscureText;
+  final String? obSecureCharacter;
 
-  Input({
-    Key? key,
-    this.controller,
-    this.enabled = true,
-    required this.name,
-    this.hint = "",
-    this.onChanged,
-    this.validator,
-    this.maxLength,
-    this.onSubmitted,
-    this.onEditingComplete,
-    this.initialValue,
-    this.inputFormatter,
-    required this.nextAction,
-    this.autofocus = false,
-    this.isRequired = false,
-    this.focusNode,
-    this.useCustomKeyboard = true,
-    this.icon,
-    this.style,
-    this.backgroundColor,
-    this.borderColor,
-    this.hintColor,
-    this.textColor,
-    required this.textInputType,
-    this.maxLines = 1,
-    this.minLines,
-    this.expands = false,
-    this.minHeight,
-    this.borderRadius = 8.0,
-    this.prefixWidget,
-    this.prefixBackground,
-    this.suffixWidget,
-    this.suffixBackground,
-    this.suffixIcon,
-  }) : super(key: key);
+  Input(
+      {Key? key,
+      this.controller,
+      this.enabled = true,
+      required this.name,
+      this.hint = "",
+      this.onChanged,
+      this.validator,
+      this.maxLength,
+      this.onSubmitted,
+      this.onEditingComplete,
+      this.initialValue,
+      this.inputFormatter,
+      required this.nextAction,
+      this.autofocus = false,
+      this.isRequired = false,
+      this.focusNode,
+      this.useCustomKeyboard = true,
+      this.icon,
+      this.style,
+      this.backgroundColor,
+      this.borderColor,
+      this.hintColor,
+      this.textColor,
+      required this.textInputType,
+      this.maxLines = 1,
+      this.minLines,
+      this.expands = false,
+      this.minHeight,
+      this.borderRadius = 8.0,
+      this.prefixWidget,
+      this.prefixBackground,
+      this.suffixWidget,
+      this.suffixBackground,
+      this.suffixIcon,
+      this.obscureText = false,
+      this.obSecureCharacter})
+      : super(key: key);
 
   @override
   _InputState createState() => _InputState();
@@ -225,6 +229,8 @@ class _InputState extends State<Input> {
                             minHeight: widget.minHeight ?? t.minHeight),
                         child: Center(
                           child: TextFormField(
+                            obscuringCharacter: widget.obSecureCharacter ?? '•',
+                            obscureText: widget.obscureText,
                             onFieldSubmitted: widget.onSubmitted,
                             style: widget.style ??
                                 TextStyle(

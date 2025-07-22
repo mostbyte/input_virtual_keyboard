@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:input_virtual_keyboard/src/inputs/input.dart';
 
-class SearchInput extends StatefulWidget {
-  SearchInput({
+class PasswordInput extends StatefulWidget {
+  PasswordInput({
     Key? key,
     this.controller,
     this.name = '',
@@ -38,6 +38,8 @@ class SearchInput extends StatefulWidget {
     this.suffixWidget,
     this.suffixBackground,
     this.suffixIcon,
+    this.obsecureText,
+    this.obsecureCharacter,
   }) : super(key: key);
   final TextEditingController? controller;
   final String name;
@@ -72,14 +74,17 @@ class SearchInput extends StatefulWidget {
   final Widget? suffixWidget;
   final Color? suffixBackground;
   final Widget? suffixIcon;
+  final bool? obsecureText;
+  final String? obsecureCharacter;
 
   @override
-  State<SearchInput> createState() => _SearchInputState();
+  State<PasswordInput> createState() => _PasswordInputState();
 }
 
-class _SearchInputState extends State<SearchInput> {
+class _PasswordInputState extends State<PasswordInput> {
   late final TextEditingController _ctl =
       widget.controller ?? TextEditingController();
+  late bool _obscureText = widget.obsecureText ?? true;
 
   @override
   void dispose() {
@@ -119,40 +124,28 @@ class _SearchInputState extends State<SearchInput> {
       prefixBackground: widget.prefixBackground,
       suffixWidget: widget.suffixWidget,
       suffixBackground: widget.suffixBackground,
-
-      // ---------- динамический suffixIcon ----------
+      obscureText: _obscureText,
+      obSecureCharacter: widget.obsecureCharacter,
       suffixIcon: ValueListenableBuilder<TextEditingValue>(
-        valueListenable: _ctl, // слушаем тот же объект
+        valueListenable: _ctl,
         builder: (context, value, _) {
-          final bool empty = value.text.isEmpty;
-          if (empty) {
-            return Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                  color: Color(0xff1050BA),
-                  borderRadius: BorderRadius.circular(6)),
-              child: Image.asset(
-                "assets/search.png",
-                package: 'input_virtual_keyboard',
-                width: 9,
-                height: 9,
-              ),
-            );
-          }
           return InkWell(
-            onTap: () => _ctl.clear(),
+            onTap: () {
+              setState(() {
+                _obscureText = !_obscureText;
+                _ctl.text = _obscureText
+                    ? _ctl.text.replaceAll(RegExp(r'.'), '*')
+                    : _ctl.text;
+              });
+            },
             child: Container(
-              width: 24,
+              width: 18,
               height: 24,
-              decoration: BoxDecoration(
-                  color: Color(0xffBA1010),
-                  borderRadius: BorderRadius.circular(6)),
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(6)),
               child: Image.asset(
-                "assets/close.png",
+                _obscureText ? "assets/eye_close.png" : "assets/eye.png",
+                color: _obscureText ? Color(0xff9C9AA5) : Color(0xff1050BA),
                 package: 'input_virtual_keyboard',
-                width: 9,
-                height: 9,
               ),
             ),
           );

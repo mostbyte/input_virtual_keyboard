@@ -84,10 +84,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 name: "some",
                 nextAction: false,
                 initialValue: "",
-                onSubmitted: (val) {
-                  print("val => $val");
-                },
                 hint: "Enter search",
+                useCustomKeyboard: true,
+                hintColor: Colors.grey,
+              ),
+            ),
+            SizedBox(
+              width: 400,
+              child: PasswordInput(
+                name: "some",
+                nextAction: false,
+                initialValue: "",
+                hint: "Enter password",
                 useCustomKeyboard: true,
                 hintColor: Colors.grey,
               ),
@@ -103,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 hint: "Enter text",
                 useCustomKeyboard: true,
                 hintColor: Colors.grey,
-                maxLength: 5,
+                // maxLength: 5,
               ),
             ),
             SizedBox(

@@ -29,6 +29,8 @@ flutter:
     - assets/passive_keyboard.png
     - assets/search.png
     - assets/close.png
+    - assets/eye.png
+    - assets/eye_close.png
   #
   # For details regarding assets in packages, see
   # https://flutter.dev/to/asset-from-package
