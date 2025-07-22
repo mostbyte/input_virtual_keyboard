@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:input_virtual_keyboard/src/inputs/input.dart';
 
-class TextInput extends Input {
-  TextInput({
+class TextAreaInput extends Input {
+  TextAreaInput({
     super.key,
     super.controller,
     super.name = "",
@@ -26,12 +26,10 @@ class TextInput extends Input {
     super.borderColor,
     super.hintColor,
     super.textColor,
-    super.textInputType = TextInputType.text,
-    super.borderRadius,
-    super.prefixWidget,
-    super.prefixBackground,
-    super.suffixWidget,
-    super.suffixBackground,
-    super.suffixIcon,
+    super.textInputType = TextInputType.multiline,
+    super.maxLines,
+    super.minLines,
+    super.expands,
+    super.minHeight,
   });
 }

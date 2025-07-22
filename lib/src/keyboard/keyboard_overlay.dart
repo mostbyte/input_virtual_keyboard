@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:input_virtual_keyboard/src/keyboard/number_keyboard.dart';
 import 'full_keyboard.dart';
 
 typedef KeyboardVisibilityChanged = void Function(bool isVisible);
 
 class KeyboardOverlay {
+  static TextInputType? textInputType;
   static OverlayEntry? _overlayEntry;
   static Offset _position = Offset.zero;
   static bool _isVisible = false;
@@ -12,6 +15,7 @@ class KeyboardOverlay {
   static void toggleKeyboard(
     BuildContext context,
     TextEditingController controller,
+    List<TextInputFormatter> formatters,
     FocusNode focusNode,
     GlobalKey keyboardButtonKey, {
     required KeyboardVisibilityChanged onVisibilityChanged,
@@ -19,7 +23,8 @@ class KeyboardOverlay {
     if (_overlayEntry == null) {
       _listener = onVisibilityChanged;
       _listener!(true);
-      showKeyboard(context, controller, focusNode, keyboardButtonKey);
+      showKeyboard(
+          context, controller, focusNode, formatters, keyboardButtonKey);
     } else {
       hideKeyboard();
     }
@@ -29,6 +34,7 @@ class KeyboardOverlay {
     BuildContext context,
     TextEditingController controller,
     FocusNode focusNode,
+    List<TextInputFormatter> formatters,
     GlobalKey keyboardButtonKey,
   ) {
     if (_overlayEntry != null) {
@@ -80,87 +86,188 @@ class KeyboardOverlay {
                     elevation: 0,
                     child: Stack(
                       children: [
-                        FullKeyboard(
-                          onKeyPressed: (String text) {
-                            final currentText = controller.text;
-                            final textSelection = controller.selection;
-                            final newText = currentText.replaceRange(
-                              textSelection.start,
-                              textSelection.end,
-                              text,
-                            );
-                            final myTextLength = text.length;
-                            controller.text = newText;
-                            controller.selection = textSelection.copyWith(
-                              baseOffset: textSelection.start + myTextLength,
-                              extentOffset: textSelection.start + myTextLength,
-                            );
-                          },
-                          onBackspace: () {
-                            final currentText = controller.text;
-                            final textSelection = controller.selection;
-                            final selectionLength =
-                                textSelection.end - textSelection.start;
+                        if (textInputType == TextInputType.number ||
+                            textInputType == TextInputType.phone)
+                          NumberKeyboard(
+                            onKeyPressed: (String text) {
+                              final current = controller.value;
+                              TextSelection sel = controller.selection;
 
-                            if (selectionLength > 0) {
+                              // ── 1. make sure the selection is inside current.text ──────────────
+                              final bool invalid = sel.start < 0 ||
+                                  sel.end < 0 ||
+                                  sel.start > current.text.length ||
+                                  sel.end > current.text.length;
+
+                              if (invalid) {
+                                // place the caret at the end of the string (or at 0 if empty)
+                                final int safeOffset = current.text.length;
+                                sel =
+                                    TextSelection.collapsed(offset: safeOffset);
+                              }
+
+                              // ── 2. replace the selected range with the key that was pressed ────
+                              final newText = current.text
+                                  .replaceRange(sel.start, sel.end, text);
+
+                              controller.value = controller.value.copyWith(
+                                text: newText,
+                                selection: TextSelection.collapsed(
+                                  offset: sel.start + text.length,
+                                ),
+                                composing: TextRange.empty,
+                              );
+                              for (final f in formatters) {
+                                controller.value = f.formatEditUpdate(
+                                    current, controller.value);
+                              }
+                            },
+                            onBackspace: () {
+                              final currentText = controller.text;
+                              final textSelection = controller.selection;
+                              final selectionLength =
+                                  textSelection.end - textSelection.start;
+
+                              if (selectionLength > 0) {
+                                final newText = currentText.replaceRange(
+                                  textSelection.start,
+                                  textSelection.end,
+                                  '',
+                                );
+                                controller.text = newText;
+                                controller.selection = textSelection.copyWith(
+                                  baseOffset: textSelection.start,
+                                  extentOffset: textSelection.start,
+                                );
+                                return;
+                              }
+
+                              if (textSelection.start == 0) {
+                                return;
+                              }
+
+                              final previousCodeUnit = currentText
+                                  .codeUnitAt(textSelection.start - 1);
+                              final offset =
+                                  _isUtf16Surrogate(previousCodeUnit) ? 2 : 1;
                               final newText = currentText.replaceRange(
+                                textSelection.start - offset,
                                 textSelection.start,
-                                textSelection.end,
                                 '',
                               );
                               controller.text = newText;
                               controller.selection = textSelection.copyWith(
-                                baseOffset: textSelection.start,
-                                extentOffset: textSelection.start,
+                                baseOffset: textSelection.start - offset,
+                                extentOffset: textSelection.start - offset,
                               );
-                              return;
-                            }
+                            },
+                            onSubmit: () {
+                              hideKeyboard();
+                              focusNode.unfocus();
+                            },
+                          ),
+                        if (textInputType == TextInputType.text ||
+                            textInputType == TextInputType.multiline ||
+                            textInputType == TextInputType.emailAddress)
+                          FullKeyboard(
+                            onKeyPressed: (String text) {
+                              final current = controller.value;
+                              TextSelection sel = controller.selection;
 
-                            if (textSelection.start == 0) {
-                              return;
-                            }
+                              // ── 1. make sure the selection is inside current.text ──────────────
+                              final bool invalid = sel.start < 0 ||
+                                  sel.end < 0 ||
+                                  sel.start > current.text.length ||
+                                  sel.end > current.text.length;
 
-                            final previousCodeUnit =
-                                currentText.codeUnitAt(textSelection.start - 1);
-                            final offset =
-                                _isUtf16Surrogate(previousCodeUnit) ? 2 : 1;
-                            final newText = currentText.replaceRange(
-                              textSelection.start - offset,
-                              textSelection.start,
-                              '',
-                            );
-                            controller.text = newText;
-                            controller.selection = textSelection.copyWith(
-                              baseOffset: textSelection.start - offset,
-                              extentOffset: textSelection.start - offset,
-                            );
-                          },
-                          onSubmit: () {
-                            hideKeyboard();
-                            focusNode.unfocus();
-                          },
-                          onLeftArrow: () {
-                            final textSelection = controller.selection;
-                            final newOffset = textSelection.start - 1;
-                            if (newOffset >= 0) {
-                              controller.selection = textSelection.copyWith(
-                                baseOffset: newOffset,
-                                extentOffset: newOffset,
+                              if (invalid) {
+                                // place the caret at the end of the string (or at 0 if empty)
+                                final int safeOffset = current.text.length;
+                                sel =
+                                    TextSelection.collapsed(offset: safeOffset);
+                              }
+
+                              // ── 2. replace the selected range with the key that was pressed ────
+                              final newText = current.text
+                                  .replaceRange(sel.start, sel.end, text);
+
+                              controller.value = controller.value.copyWith(
+                                text: newText,
+                                selection: TextSelection.collapsed(
+                                  offset: sel.start + text.length,
+                                ),
+                                composing: TextRange.empty,
                               );
-                            }
-                          },
-                          onRightArrow: () {
-                            final currentText = controller.text;
-                            final textSelection = controller.selection;
-                            final newOffset = textSelection.start + 1;
-                            if (newOffset <= currentText.length) {
-                              controller.selection = textSelection.copyWith(
-                                baseOffset: newOffset,
-                                extentOffset: newOffset,
+                              for (final f in formatters) {
+                                controller.value = f.formatEditUpdate(
+                                    current, controller.value);
+                              }
+                            },
+                            onBackspace: () {
+                              final currentText = controller.text;
+                              final textSelection = controller.selection;
+                              final selectionLength =
+                                  textSelection.end - textSelection.start;
+
+                              if (selectionLength > 0) {
+                                final newText = currentText.replaceRange(
+                                  textSelection.start,
+                                  textSelection.end,
+                                  '',
+                                );
+                                controller.text = newText;
+                                controller.selection = textSelection.copyWith(
+                                  baseOffset: textSelection.start,
+                                  extentOffset: textSelection.start,
+                                );
+                                return;
+                              }
+
+                              if (textSelection.start == 0) {
+                                return;
+                              }
+
+                              final previousCodeUnit = currentText
+                                  .codeUnitAt(textSelection.start - 1);
+                              final offset =
+                                  _isUtf16Surrogate(previousCodeUnit) ? 2 : 1;
+                              final newText = currentText.replaceRange(
+                                textSelection.start - offset,
+                                textSelection.start,
+                                '',
                               );
-                            }
-                          },
-                        ),
+                              controller.text = newText;
+                              controller.selection = textSelection.copyWith(
+                                baseOffset: textSelection.start - offset,
+                                extentOffset: textSelection.start - offset,
+                              );
+                            },
+                            onSubmit: () {
+                              hideKeyboard();
+                              focusNode.unfocus();
+                            },
+                            onLeftArrow: () {
+                              final textSelection = controller.selection;
+                              final newOffset = textSelection.start - 1;
+                              if (newOffset >= 0) {
+                                controller.selection = textSelection.copyWith(
+                                  baseOffset: newOffset,
+                                  extentOffset: newOffset,
+                                );
+                              }
+                            },
+                            onRightArrow: () {
+                              final currentText = controller.text;
+                              final textSelection = controller.selection;
+                              final newOffset = textSelection.start + 1;
+                              if (newOffset <= currentText.length) {
+                                controller.selection = textSelection.copyWith(
+                                  baseOffset: newOffset,
+                                  extentOffset: newOffset,
+                                );
+                              }
+                            },
+                          ),
                         Positioned(
                             top: 0,
                             right: 0,

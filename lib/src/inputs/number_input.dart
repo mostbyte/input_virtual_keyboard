@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:input_virtual_keyboard/src/inputs/input.dart';
 
-class TextInput extends Input {
-  TextInput({
+class NumberInput extends Input {
+  NumberInput({
     super.key,
     super.controller,
     super.name = "",
@@ -14,7 +15,7 @@ class TextInput extends Input {
     super.maxLength,
     super.onEditingComplete,
     super.initialValue,
-    super.inputFormatter,
+    final List<TextInputFormatter>? inputFormatter,
     required super.nextAction,
     super.autofocus = false,
     bool isRequired = false,
@@ -26,12 +27,14 @@ class TextInput extends Input {
     super.borderColor,
     super.hintColor,
     super.textColor,
-    super.textInputType = TextInputType.text,
+    maxLines = 1,
+    minLines = 1,
+    super.textInputType = TextInputType.number,
     super.borderRadius,
     super.prefixWidget,
     super.prefixBackground,
     super.suffixWidget,
     super.suffixBackground,
     super.suffixIcon,
-  });
+  }) : super(inputFormatter: [FilteringTextInputFormatter.digitsOnly]);
 }

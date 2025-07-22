@@ -27,6 +27,8 @@ flutter:
   assets:
     - assets/active_keyboard.png
     - assets/passive_keyboard.png
+    - assets/search.png
+    - assets/close.png
   #
   # For details regarding assets in packages, see
   # https://flutter.dev/to/asset-from-package

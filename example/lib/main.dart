@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:input_virtual_keyboard/input_virtual_keyboard.dart';
+import 'package:input_virtual_keyboard/virtual_keyboard_theme.dart';
 
-void main() {
+void main() async {
+  await InputVirtualKeyboard.init(
+    theme: const VKTheme(
+      backgroundColor: Colors.white,
+      hintColor: Color(0xFF9C9AA5),
+
+      borderColor: Color(0xFF465FF166),
+      textColor: Colors.black,
+      minHeight: 38,
+      textSize: 15,
+    ),
+  );
   runApp(const MyApp());
 }
 
@@ -66,48 +78,88 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           children: [
             SizedBox(height: 200),
-            SizedBox(width: 200, child: TextInput(name: "", nextAction: false)),
-
-            // NumberKeyboard(
-            //   onKeyPressed: (String value) {
-            //     // Handle number or symbol press
-            //     print('Key pressed: $value');
-            //   },
-            //   onBackspace: () {
-            //     // Handle backspace
-            //     print('Backspace pressed');
-            //   },
-            //   onSubmit: () {
-            //     // Handle submit/enter
-            //     print('Submit pressed');
-            //   },
-            // ),
-            // FullKeyboard(
-            //   onKeyPressed: (String value) {
-            //     // Handle key press
-            //     print('Key pressed: $value');
-            //   },
-            //   onBackspace: () {
-            //     // Handle backspace
-            //     print('Backspace pressed');
-            //   },
-            //   onSubmit: () {
-            //     // Handle submit/enter
-            //     print('Submit pressed');
-            //   },
-            //   onNumberToggle: () {
-            //     // Handle number keyboard toggle
-            //     print('Number toggle pressed');
-            //   },
-            //   onLeftArrow: () {
-            //     // Handle left arrow
-            //     print('Left arrow pressed');
-            //   },
-            //   onRightArrow: () {
-            //     // Handle right arrow
-            //     print('Right arrow pressed');
-            //   },
-            // ),
+            SizedBox(
+              width: 400,
+              child: SearchInput(
+                name: "some",
+                nextAction: false,
+                initialValue: "",
+                onSubmitted: (val) {
+                  print("val => $val");
+                },
+                hint: "Enter search",
+                useCustomKeyboard: true,
+                hintColor: Colors.grey,
+              ),
+            ),
+            SizedBox(
+              width: 200,
+              child: TextInput(
+                prefixWidget: Icon(Icons.money, color: Colors.white),
+                isRequired: true,
+                name: "some",
+                nextAction: false,
+                initialValue: "",
+                hint: "Enter text",
+                useCustomKeyboard: true,
+                hintColor: Colors.grey,
+                maxLength: 5,
+              ),
+            ),
+            SizedBox(
+              width: 200,
+              child: TextAreaInput(
+                isRequired: true,
+                name: "some",
+                nextAction: false,
+                initialValue: "",
+                hint: "Enter area text",
+                useCustomKeyboard: true,
+                hintColor: Colors.grey,
+                maxLength: 200,
+                maxLines: null,
+                minLines: null,
+                minHeight: 200,
+              ),
+            ),
+            SizedBox(
+              width: 500,
+              child: NumberInput(
+                prefixWidget: Text(
+                  "+998",
+                  style: TextStyle(color: Colors.white),
+                ),
+                isRequired: true,
+                hint: "99 123 45 67",
+                name: "some",
+                nextAction: false,
+                initialValue: "",
+                useCustomKeyboard: true,
+                hintColor: Colors.grey,
+                suffixWidget: Icon(Icons.money, color: Colors.red),
+                suffixBackground: Colors.green,
+                suffixIcon: Icon(
+                  Icons.remove_red_eye_sharp,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 500,
+              child: PhoneInput(
+                prefixWidget: Text(
+                  "+998",
+                  style: TextStyle(color: Colors.white),
+                ),
+                isRequired: true,
+                hint: "99 123 45 67",
+                name: "some",
+                nextAction: false,
+                initialValue: "",
+                useCustomKeyboard: true,
+                hintColor: Colors.grey,
+              ),
+            ),
           ],
         ),
       ),

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:input_virtual_keyboard/src/inputs/input.dart';
+import 'package:input_virtual_keyboard/src/utils/phone_masked_input.dart';
 
-class TextInput extends Input {
-  TextInput({
+class PhoneInput extends Input {
+  PhoneInput({
     super.key,
     super.controller,
     super.name = "",
@@ -11,10 +12,10 @@ class TextInput extends Input {
     super.onChanged,
     super.validator,
     super.onSubmitted,
-    super.maxLength,
+    super.maxLength = 12,
     super.onEditingComplete,
     super.initialValue,
-    super.inputFormatter,
+    super.inputFormatter = const [PhoneFormatter()],
     required super.nextAction,
     super.autofocus = false,
     bool isRequired = false,
@@ -26,12 +27,14 @@ class TextInput extends Input {
     super.borderColor,
     super.hintColor,
     super.textColor,
-    super.textInputType = TextInputType.text,
+    maxLines = 1,
+    minLines = 1,
+    super.textInputType = TextInputType.number,
     super.borderRadius,
-    super.prefixWidget,
+    super.prefixWidget = const Text(
+      "+998",
+      style: TextStyle(color: Colors.white),
+    ),
     super.prefixBackground,
-    super.suffixWidget,
-    super.suffixBackground,
-    super.suffixIcon,
   });
 }
