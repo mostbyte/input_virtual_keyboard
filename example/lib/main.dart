@@ -4,15 +4,7 @@ import 'package:input_virtual_keyboard/virtual_keyboard_theme.dart';
 
 void main() async {
   await InputVirtualKeyboard.init(
-    theme: const VKTheme(
-      backgroundColor: Colors.white,
-      hintColor: Color(0xFF9C9AA5),
-
-      borderColor: Color(0xFF465FF166),
-      textColor: Colors.black,
-      minHeight: 38,
-      textSize: 15,
-    ),
+    theme: const VKTheme(minHeight: 38, textSize: 15),
   );
   runApp(const MyApp());
 }
@@ -67,6 +59,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  changed(p0) {
+    print("Search: $p0");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,6 +77,7 @@ class _MyHomePageState extends State<MyHomePage> {
             SizedBox(
               width: 400,
               child: SearchInput(
+                onChanged: changed,
                 name: "some",
                 nextAction: false,
                 initialValue: "",

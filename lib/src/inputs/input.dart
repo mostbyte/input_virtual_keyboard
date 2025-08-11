@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:input_virtual_keyboard/input_virtual_keyboard.dart';
@@ -19,7 +21,7 @@ class Input extends StatefulWidget {
   final bool isRequired;
   final List<TextInputFormatter>? inputFormatter;
   final FocusNode? focusNode;
-  final bool useCustomKeyboard;
+  bool useCustomKeyboard;
   final Widget? icon;
   final TextStyle? style;
   final Color? backgroundColor;
@@ -97,7 +99,9 @@ class _InputState extends State<Input> {
   @override
   void initState() {
     super.initState();
-
+    if (Platform.isAndroid || Platform.isIOS) {
+      widget.useCustomKeyboard = false;
+    }
     KeyboardOverlay.textInputType = widget.textInputType;
 
     if (widget.inputFormatter != null) {
@@ -159,6 +163,9 @@ class _InputState extends State<Input> {
 
   @override
   Widget build(BuildContext context) {
+    if (Platform.isAndroid || Platform.isIOS) {
+      widget.useCustomKeyboard = false;
+    }
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
