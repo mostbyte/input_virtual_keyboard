@@ -6,7 +6,7 @@ class VKTheme {
   const VKTheme({
     this.primaryColor = const Color(0xFF1050BA),
     this.backgroundColor = const Color(0xFFFFFFFF),
-    this.hintColor = const Color(0xFF2D2F33),
+    this.hintColor = const Color(0xFFBDBDBD),
     this.textColor = Colors.black,
     this.borderColor = const Color(0xFFBDBDBD),
     this.minHeight = 50,
