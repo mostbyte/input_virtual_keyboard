@@ -19,12 +19,14 @@ class KeyboardOverlay {
     FocusNode focusNode,
     GlobalKey keyboardButtonKey, {
     required KeyboardVisibilityChanged onVisibilityChanged,
+    ValueChanged<String>?
+        onChanged, // optional; listener in Input already covers it
   }) {
     if (_overlayEntry == null) {
       _listener = onVisibilityChanged;
       _listener!(true);
-      showKeyboard(
-          context, controller, focusNode, formatters, keyboardButtonKey);
+      showKeyboard(context, controller, focusNode, formatters,
+          keyboardButtonKey, onChanged);
     } else {
       hideKeyboard();
     }
@@ -36,6 +38,8 @@ class KeyboardOverlay {
     FocusNode focusNode,
     List<TextInputFormatter> formatters,
     GlobalKey keyboardButtonKey,
+    ValueChanged<String>?
+        onChanged, // optional; listener in Input already covers it
   ) {
     if (_overlayEntry != null) {
       return;
@@ -121,6 +125,7 @@ class KeyboardOverlay {
                                 controller.value = f.formatEditUpdate(
                                     current, controller.value);
                               }
+                              onChanged?.call(controller.text); // optional
                             },
                             onBackspace: () {
                               final currentText = controller.text;
@@ -160,6 +165,8 @@ class KeyboardOverlay {
                                 baseOffset: textSelection.start - offset,
                                 extentOffset: textSelection.start - offset,
                               );
+
+                              onChanged?.call(controller.text); // optional
                             },
                             onSubmit: () {
                               hideKeyboard();
@@ -202,6 +209,7 @@ class KeyboardOverlay {
                                 controller.value = f.formatEditUpdate(
                                     current, controller.value);
                               }
+                              onChanged?.call(controller.text); // optional
                             },
                             onBackspace: () {
                               final currentText = controller.text;
@@ -241,6 +249,7 @@ class KeyboardOverlay {
                                 baseOffset: textSelection.start - offset,
                                 extentOffset: textSelection.start - offset,
                               );
+                              onChanged?.call(controller.text); // optional
                             },
                             onSubmit: () {
                               hideKeyboard();

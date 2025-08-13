@@ -95,6 +95,7 @@ class _InputState extends State<Input> {
   bool _isKeyboardVisible = false;
   List<TextInputFormatter> _inputFormatter = [];
   final GlobalKey _keyboardButtonKey = GlobalKey();
+  String _lastEmitted = '';
 
   @override
   void initState() {
@@ -114,6 +115,8 @@ class _InputState extends State<Input> {
     }
 
     _focusNode.addListener(_handleFocusChange);
+    _lastEmitted = _controller.text;
+    _controller.addListener(_emitIfChanged);
   }
 
   @override
@@ -134,6 +137,14 @@ class _InputState extends State<Input> {
       setState(() {
         _isKeyboardVisible = false;
       });
+    }
+  }
+
+  void _emitIfChanged() {
+    final t = _controller.text;
+    if (t != _lastEmitted) {
+      _lastEmitted = t;
+      widget.onChanged?.call(t); // <- fires for overlay & system input
     }
   }
 
