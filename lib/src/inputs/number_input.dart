@@ -36,5 +36,10 @@ class NumberInput extends Input {
     super.suffixWidget,
     super.suffixBackground,
     super.suffixIcon,
-  }) : super(inputFormatter: [FilteringTextInputFormatter.digitsOnly]);
+  }) : super(inputFormatter: [
+          // FilteringTextInputFormatter.digitsOnly,
+          FilteringTextInputFormatter.allow(
+            RegExp(r'^[0-9.]*$'),
+          )
+        ]);
 }
