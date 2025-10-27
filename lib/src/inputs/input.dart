@@ -140,6 +140,24 @@ class _InputState extends State<Input> {
     }
   }
 
+  void _handleSubmit() {
+    // 1) fire the external callback
+    widget.onSubmitted?.call(_controller.text);
+
+    // 2) optional: onEditingComplete if you expose it
+    widget.onEditingComplete?.call();
+
+    // 3) focus behavior like the system keyboard
+    if (widget.nextAction) {
+      FocusScope.of(context).nextFocus();
+    } else {
+      _focusNode.unfocus();
+    }
+
+    // 4) hide your overlay
+    KeyboardOverlay.hideKeyboard();
+  }
+
   void _emitIfChanged() {
     final t = _controller.text;
     if (t != _lastEmitted) {
@@ -164,6 +182,7 @@ class _InputState extends State<Input> {
       formatters,
       _focusNode,
       _keyboardButtonKey,
+      onSubmit: _handleSubmit,
       // show: _isKeyboardVisible,
       onVisibilityChanged: (bool visible) {
         // This fires **every** time the overlay shows or hides
@@ -249,7 +268,8 @@ class _InputState extends State<Input> {
                           child: TextFormField(
                             obscuringCharacter: widget.obSecureCharacter ?? '•',
                             obscureText: widget.obscureText,
-                            onFieldSubmitted: widget.onSubmitted,
+                            onFieldSubmitted: (_) => _handleSubmit(),
+                            onEditingComplete: () => _handleSubmit(),
                             style: widget.style ??
                                 TextStyle(
                                   color: widget.textColor ?? t.textColor,

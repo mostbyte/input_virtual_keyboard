@@ -10,6 +10,7 @@ class KeyboardOverlay {
   static OverlayEntry? _overlayEntry;
   static Offset _position = Offset.zero;
   static bool _isVisible = false;
+
   static KeyboardVisibilityChanged? _listener; // <<–– store the callback
 
   static void toggleKeyboard(
@@ -21,12 +22,13 @@ class KeyboardOverlay {
     required KeyboardVisibilityChanged onVisibilityChanged,
     ValueChanged<String>?
         onChanged, // optional; listener in Input already covers it
+    VoidCallback? onSubmit, // 👈 add
   }) {
     if (_overlayEntry == null) {
       _listener = onVisibilityChanged;
       _listener!(true);
       showKeyboard(context, controller, focusNode, formatters,
-          keyboardButtonKey, onChanged);
+          keyboardButtonKey, onChanged, onSubmit);
     } else {
       hideKeyboard();
     }
@@ -40,6 +42,7 @@ class KeyboardOverlay {
     GlobalKey keyboardButtonKey,
     ValueChanged<String>?
         onChanged, // optional; listener in Input already covers it
+    VoidCallback? onSubmit, // 👈 add
   ) {
     if (_overlayEntry != null) {
       return;
@@ -169,6 +172,8 @@ class KeyboardOverlay {
                               onChanged?.call(controller.text); // optional
                             },
                             onSubmit: () {
+                              onSubmit
+                                  ?.call(); // this triggers Input._handleSubmit
                               hideKeyboard();
                               focusNode.unfocus();
                             },
@@ -252,6 +257,8 @@ class KeyboardOverlay {
                               onChanged?.call(controller.text); // optional
                             },
                             onSubmit: () {
+                              onSubmit
+                                  ?.call(); // this triggers Input._handleSubmit
                               hideKeyboard();
                               focusNode.unfocus();
                             },
