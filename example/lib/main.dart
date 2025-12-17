@@ -66,7 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController numberController = TextEditingController();
   @override
   void initState() {
-    numberController.text = "123";
+    numberController.text = "123.0";
     super.initState();
   }
 

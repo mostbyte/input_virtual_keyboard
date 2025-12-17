@@ -132,7 +132,19 @@ class KeyboardOverlay {
                             },
                             onBackspace: () {
                               final currentText = controller.text;
-                              final textSelection = controller.selection;
+                              TextSelection textSelection = controller.selection;
+
+                              // Validate selection bounds
+                              if (textSelection.start < 0 ||
+                                  textSelection.end < 0 ||
+                                  textSelection.start > currentText.length ||
+                                  textSelection.end > currentText.length) {
+                                // Reset selection to end of text
+                                textSelection = TextSelection.collapsed(
+                                    offset: currentText.length);
+                                controller.selection = textSelection;
+                              }
+
                               final selectionLength =
                                   textSelection.end - textSelection.start;
 
@@ -223,7 +235,19 @@ class KeyboardOverlay {
                             },
                             onBackspace: () {
                               final currentText = controller.text;
-                              final textSelection = controller.selection;
+                              TextSelection textSelection = controller.selection;
+
+                              // Validate selection bounds
+                              if (textSelection.start < 0 ||
+                                  textSelection.end < 0 ||
+                                  textSelection.start > currentText.length ||
+                                  textSelection.end > currentText.length) {
+                                // Reset selection to end of text
+                                textSelection = TextSelection.collapsed(
+                                    offset: currentText.length);
+                                controller.selection = textSelection;
+                              }
+
                               final selectionLength =
                                   textSelection.end - textSelection.start;
 
