@@ -156,17 +156,22 @@ class KeyboardOverlay {
 
                               final previousCodeUnit = currentText
                                   .codeUnitAt(textSelection.start - 1);
-                              final offset =
+                              int offset =
                                   _isUtf16Surrogate(previousCodeUnit) ? 2 : 1;
+                              // Ensure we don't go below 0
+                              if (textSelection.start - offset < 0) {
+                                offset = textSelection.start;
+                              }
+                              final newStart = textSelection.start - offset;
                               final newText = currentText.replaceRange(
-                                textSelection.start - offset,
+                                newStart,
                                 textSelection.start,
                                 '',
                               );
                               controller.text = newText;
                               controller.selection = textSelection.copyWith(
-                                baseOffset: textSelection.start - offset,
-                                extentOffset: textSelection.start - offset,
+                                baseOffset: newStart,
+                                extentOffset: newStart,
                               );
 
                               onChanged?.call(controller.text); // optional
@@ -242,17 +247,22 @@ class KeyboardOverlay {
 
                               final previousCodeUnit = currentText
                                   .codeUnitAt(textSelection.start - 1);
-                              final offset =
+                              int offset =
                                   _isUtf16Surrogate(previousCodeUnit) ? 2 : 1;
+                              // Ensure we don't go below 0
+                              if (textSelection.start - offset < 0) {
+                                offset = textSelection.start;
+                              }
+                              final newStart = textSelection.start - offset;
                               final newText = currentText.replaceRange(
-                                textSelection.start - offset,
+                                newStart,
                                 textSelection.start,
                                 '',
                               );
                               controller.text = newText;
                               controller.selection = textSelection.copyWith(
-                                baseOffset: textSelection.start - offset,
-                                extentOffset: textSelection.start - offset,
+                                baseOffset: newStart,
+                                extentOffset: newStart,
                               );
                               onChanged?.call(controller.text); // optional
                             },

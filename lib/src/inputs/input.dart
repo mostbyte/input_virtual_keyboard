@@ -198,7 +198,7 @@ class _InputState extends State<Input> {
     }
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 10),
+      // margin: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

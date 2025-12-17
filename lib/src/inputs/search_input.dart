@@ -141,7 +141,12 @@ class _SearchInputState extends State<SearchInput> {
             );
           }
           return InkWell(
-            onTap: () => _ctl.clear(),
+            onTap: () {
+              _ctl.clear();
+              if (widget.onChanged != null) {
+                widget.onChanged!('');
+              }
+            },
             child: Container(
               width: 24,
               height: 24,
