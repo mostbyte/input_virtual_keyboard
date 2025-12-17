@@ -63,6 +63,13 @@ class _MyHomePageState extends State<MyHomePage> {
     print("Search: $p0");
   }
 
+  TextEditingController numberController = TextEditingController();
+  @override
+  void initState() {
+    numberController.text = "123";
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,6 +137,7 @@ class _MyHomePageState extends State<MyHomePage> {
             SizedBox(
               width: 500,
               child: NumberInput(
+                controller: numberController,
                 prefixWidget: Text(
                   "+998",
                   style: TextStyle(color: Colors.white),
