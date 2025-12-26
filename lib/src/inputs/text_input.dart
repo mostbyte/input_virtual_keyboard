@@ -19,7 +19,7 @@ class TextInput extends Input {
     super.autofocus = false,
     super.isRequired = false,
     super.focusNode,
-    super.useCustomKeyboard = true,
+    super.useCustomKeyboard,
     super.icon,
     super.style,
     super.backgroundColor,

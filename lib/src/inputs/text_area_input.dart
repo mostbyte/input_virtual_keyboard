@@ -19,7 +19,7 @@ class TextAreaInput extends Input {
     super.autofocus = false,
     bool isRequired = false,
     FocusNode? focusNode,
-    bool useCustomKeyboard = true,
+    super.useCustomKeyboard,
     super.icon,
     super.style,
     super.backgroundColor,

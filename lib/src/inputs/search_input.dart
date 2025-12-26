@@ -21,7 +21,7 @@ class SearchInput extends StatefulWidget {
     this.autofocus = false,
     this.isRequired = false,
     this.focusNode,
-    this.useCustomKeyboard = true,
+    this.useCustomKeyboard,
     this.icon,
     this.style,
     this.backgroundColor,
@@ -54,7 +54,7 @@ class SearchInput extends StatefulWidget {
   final bool expands;
   final List<TextInputFormatter>? inputFormatter;
   final FocusNode? focusNode;
-  final bool useCustomKeyboard;
+  final bool? useCustomKeyboard;
   final Widget? icon;
   final bool autofocus;
   final TextStyle? style;

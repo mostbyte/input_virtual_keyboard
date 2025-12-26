@@ -5,6 +5,7 @@ import 'package:input_virtual_keyboard/virtual_keyboard_theme.dart';
 void main() async {
   await InputVirtualKeyboard.init(
     theme: const VKTheme(minHeight: 38, textSize: 15),
+    useCustomKeyboard: true,
   );
   runApp(const MyApp());
 }
@@ -89,7 +90,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 nextAction: false,
                 initialValue: "",
                 hint: "Enter search",
-                useCustomKeyboard: true,
                 hintColor: Colors.grey,
               ),
             ),
@@ -100,7 +100,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 nextAction: false,
                 initialValue: "",
                 hint: "Enter password",
-                useCustomKeyboard: true,
                 hintColor: Colors.grey,
               ),
             ),
@@ -113,7 +112,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 nextAction: false,
                 initialValue: "",
                 hint: "Enter text",
-                useCustomKeyboard: true,
                 hintColor: Colors.grey,
                 // maxLength: 5,
               ),
@@ -126,7 +124,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 nextAction: false,
                 initialValue: "",
                 hint: "Enter area text",
-                useCustomKeyboard: true,
                 hintColor: Colors.grey,
                 maxLength: 200,
                 maxLines: null,
@@ -147,7 +144,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 name: "some",
                 nextAction: false,
                 initialValue: "",
-                useCustomKeyboard: true,
                 hintColor: Colors.grey,
                 suffixWidget: Icon(Icons.money, color: Colors.red),
                 suffixBackground: Colors.green,
@@ -169,7 +165,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 name: "some",
                 nextAction: false,
                 initialValue: "",
-                useCustomKeyboard: true,
                 hintColor: Colors.grey,
               ),
             ),
