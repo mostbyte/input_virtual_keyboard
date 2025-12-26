@@ -19,9 +19,11 @@ class InputVirtualKeyboard {
 
   static bool _useCustomKeyboard = true;
   static bool get useCustomKeyboard => _useCustomKeyboard;
+  static set useCustomKeyboard(bool value) => _useCustomKeyboard = value;
 
   /// Вызываем в main.dart
-  static Future<void> init({VKTheme? theme, bool useCustomKeyboard = true}) async {
+  static Future<void> init(
+      {VKTheme? theme, bool useCustomKeyboard = true}) async {
     _theme = theme ?? const VKTheme(); // если не передали — берём дефолт
     _useCustomKeyboard = useCustomKeyboard;
     // здесь можно грузить шрифты/иконки, если нужно await
