@@ -21,7 +21,7 @@ class Input extends StatefulWidget {
   final bool isRequired;
   final List<TextInputFormatter>? inputFormatter;
   final FocusNode? focusNode;
-  bool useCustomKeyboard;
+  final bool? useCustomKeyboard;
   final Widget? icon;
   final TextStyle? style;
   final Color? backgroundColor;
@@ -59,7 +59,7 @@ class Input extends StatefulWidget {
       this.autofocus = false,
       this.isRequired = false,
       this.focusNode,
-      this.useCustomKeyboard = true,
+      this.useCustomKeyboard,
       this.icon,
       this.style,
       this.backgroundColor,
@@ -96,12 +96,17 @@ class _InputState extends State<Input> {
   List<TextInputFormatter> _inputFormatter = [];
   final GlobalKey _keyboardButtonKey = GlobalKey();
   String _lastEmitted = '';
+  late bool _useCustomKeyboard;
 
   @override
   void initState() {
     super.initState();
+    // Используем локальное значение, иначе глобальную настройку
+    // На мобильных платформах всегда отключаем кастомную клавиатуру
     if (Platform.isAndroid || Platform.isIOS) {
-      widget.useCustomKeyboard = false;
+      _useCustomKeyboard = false;
+    } else {
+      _useCustomKeyboard = widget.useCustomKeyboard ?? InputVirtualKeyboard.useCustomKeyboard;
     }
     KeyboardOverlay.textInputType = widget.textInputType;
 
@@ -193,16 +198,13 @@ class _InputState extends State<Input> {
 
   @override
   Widget build(BuildContext context) {
-    if (Platform.isAndroid || Platform.isIOS) {
-      widget.useCustomKeyboard = false;
-    }
     return Container(
       width: double.infinity,
       // margin: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          (widget.useCustomKeyboard)
+          (_useCustomKeyboard)
               ? SizedBox(
                   width: 30,
                   child: Row(
