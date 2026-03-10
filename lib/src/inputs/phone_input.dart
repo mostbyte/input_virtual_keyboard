@@ -3,7 +3,7 @@ import 'package:input_virtual_keyboard/src/inputs/input.dart';
 import 'package:input_virtual_keyboard/src/utils/phone_masked_input.dart';
 
 class PhoneInput extends Input {
-  PhoneInput({
+  const PhoneInput({
     super.key,
     super.controller,
     super.name = "",
@@ -18,8 +18,8 @@ class PhoneInput extends Input {
     super.inputFormatter = const [PhoneFormatter()],
     required super.nextAction,
     super.autofocus = false,
-    bool isRequired = false,
-    FocusNode? focusNode,
+    super.isRequired,
+    super.focusNode,
     super.useCustomKeyboard,
     super.icon,
     super.style,
@@ -27,8 +27,8 @@ class PhoneInput extends Input {
     super.borderColor,
     super.hintColor,
     super.textColor,
-    maxLines = 1,
-    minLines = 1,
+    super.maxLines = 1,
+    super.minLines,
     super.textInputType = TextInputType.number,
     super.borderRadius,
     super.prefixWidget = const Text(

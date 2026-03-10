@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:input_virtual_keyboard/src/inputs/input.dart';
 
 class TextAreaInput extends Input {
-  TextAreaInput({
+  const TextAreaInput({
     super.key,
     super.controller,
     super.name = "",
@@ -17,8 +17,8 @@ class TextAreaInput extends Input {
     super.inputFormatter,
     required super.nextAction,
     super.autofocus = false,
-    bool isRequired = false,
-    FocusNode? focusNode,
+    super.isRequired,
+    super.focusNode,
     super.useCustomKeyboard,
     super.icon,
     super.style,

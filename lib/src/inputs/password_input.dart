@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:input_virtual_keyboard/src/inputs/input.dart';
 
 class PasswordInput extends StatefulWidget {
-  PasswordInput({
+  const PasswordInput({
     Key? key,
     this.controller,
     this.name = '',
@@ -126,30 +126,22 @@ class _PasswordInputState extends State<PasswordInput> {
       suffixBackground: widget.suffixBackground,
       obscureText: _obscureText,
       obSecureCharacter: widget.obsecureCharacter,
-      suffixIcon: ValueListenableBuilder<TextEditingValue>(
-        valueListenable: _ctl,
-        builder: (context, value, _) {
-          return InkWell(
-            onTap: () {
-              setState(() {
-                _obscureText = !_obscureText;
-                _ctl.text = _obscureText
-                    ? _ctl.text.replaceAll(RegExp(r'.'), '*')
-                    : _ctl.text;
-              });
-            },
-            child: Container(
-              width: 18,
-              height: 24,
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(6)),
-              child: Image.asset(
-                _obscureText ? "assets/eye_close.png" : "assets/eye.png",
-                color: _obscureText ? Color(0xff9C9AA5) : Color(0xff1050BA),
-                package: 'input_virtual_keyboard',
-              ),
-            ),
-          );
+      suffixIcon: InkWell(
+        onTap: () {
+          setState(() {
+            _obscureText = !_obscureText;
+          });
         },
+        child: Container(
+          width: 18,
+          height: 24,
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(6)),
+          child: Image.asset(
+            _obscureText ? "assets/eye_close.png" : "assets/eye.png",
+            color: _obscureText ? const Color(0xff9C9AA5) : const Color(0xff1050BA),
+            package: 'input_virtual_keyboard',
+          ),
+        ),
       ),
     );
   }

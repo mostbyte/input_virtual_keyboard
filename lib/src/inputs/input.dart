@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:input_virtual_keyboard/input_virtual_keyboard.dart';
@@ -42,7 +41,7 @@ class Input extends StatefulWidget {
   final bool obscureText;
   final String? obSecureCharacter;
 
-  Input(
+  const Input(
       {Key? key,
       this.controller,
       this.enabled = true,
@@ -82,7 +81,7 @@ class Input extends StatefulWidget {
       : super(key: key);
 
   @override
-  _InputState createState() => _InputState();
+  State<Input> createState() => _InputState();
 }
 
 class _InputState extends State<Input> {
@@ -103,10 +102,12 @@ class _InputState extends State<Input> {
     super.initState();
     // Используем локальное значение, иначе глобальную настройку
     // На мобильных платформах всегда отключаем кастомную клавиатуру
-    if (Platform.isAndroid || Platform.isIOS) {
+    final platform = defaultTargetPlatform;
+    if (platform == TargetPlatform.android || platform == TargetPlatform.iOS) {
       _useCustomKeyboard = false;
     } else {
-      _useCustomKeyboard = widget.useCustomKeyboard ?? InputVirtualKeyboard.useCustomKeyboard;
+      _useCustomKeyboard =
+          widget.useCustomKeyboard ?? InputVirtualKeyboard.useCustomKeyboard;
     }
     KeyboardOverlay.textInputType = widget.textInputType;
 
@@ -126,22 +127,26 @@ class _InputState extends State<Input> {
 
   @override
   void dispose() {
+    _focusNode.removeListener(_handleFocusChange);
+    _controller.removeListener(_emitIfChanged);
+    KeyboardOverlay.hideKeyboard();
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
     if (widget.controller == null) {
       _controller.dispose();
     }
-    KeyboardOverlay.hideKeyboard();
     super.dispose();
   }
 
   void _handleFocusChange() {
     if (!_focusNode.hasFocus) {
       KeyboardOverlay.hideKeyboard();
-      setState(() {
-        _isKeyboardVisible = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isKeyboardVisible = false;
+        });
+      }
     }
   }
 
@@ -190,17 +195,17 @@ class _InputState extends State<Input> {
       onSubmit: _handleSubmit,
       // show: _isKeyboardVisible,
       onVisibilityChanged: (bool visible) {
-        // This fires **every** time the overlay shows or hides
-        setState(() => _isKeyboardVisible = visible);
+        if (mounted) {
+          setState(() => _isKeyboardVisible = visible);
+        }
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      // margin: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -227,7 +232,7 @@ class _InputState extends State<Input> {
                     ],
                   ),
                 )
-              : SizedBox(),
+              : const SizedBox(),
           Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -247,18 +252,19 @@ class _InputState extends State<Input> {
                           topLeft: Radius.circular(widget.borderRadius),
                           bottomLeft: Radius.circular(widget.borderRadius),
                         ),
-                        color: widget.prefixBackground ?? Color(0xff1050BA),
+                        color: widget.prefixBackground ??
+                            const Color(0xff1050BA),
                       ),
                       alignment: Alignment.center,
                       height: widget.minHeight ?? t.minHeight,
-                      child: widget.prefixWidget,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: widget.prefixWidget,
                     ),
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       alignment: Alignment.centerLeft,
-                      decoration: BoxDecoration(),
+                      decoration: const BoxDecoration(),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                             maxHeight:
@@ -304,7 +310,6 @@ class _InputState extends State<Input> {
                               isCollapsed: true,
                               contentPadding: EdgeInsets.zero,
                             ),
-                            onChanged: widget.onChanged,
                             validator: widget.isRequired
                                 ? (v) => (v == null || v.isEmpty)
                                     ? 'Обязательное поле'
@@ -319,8 +324,8 @@ class _InputState extends State<Input> {
                     Container(
                       alignment: Alignment.center,
                       height: widget.minHeight ?? t.minHeight,
-                      child: widget.suffixIcon,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: widget.suffixIcon,
                     ),
                   if (widget.suffixWidget != null)
                     Container(
@@ -329,12 +334,13 @@ class _InputState extends State<Input> {
                           topRight: Radius.circular(widget.borderRadius),
                           bottomRight: Radius.circular(widget.borderRadius),
                         ),
-                        color: widget.suffixBackground ?? Color(0xff1050BA),
+                        color: widget.suffixBackground ??
+                            const Color(0xff1050BA),
                       ),
                       alignment: Alignment.center,
                       height: widget.minHeight ?? t.minHeight,
-                      child: widget.suffixWidget,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: widget.suffixWidget,
                     ),
                 ],
               ),

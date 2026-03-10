@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:input_virtual_keyboard/src/inputs/input.dart';
 
 class TextInput extends Input {
-  TextInput({
+  const TextInput({
     super.key,
     super.controller,
     super.name = "",

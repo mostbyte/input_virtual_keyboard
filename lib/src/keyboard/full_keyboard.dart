@@ -80,8 +80,6 @@ class _FullKeyboardState extends State<FullKeyboard> {
         return 'EN';
       case KeyboardLanguage.russian:
         return 'RU';
-      default:
-        return 'EN';
     }
   }
 
@@ -102,12 +100,6 @@ class _FullKeyboardState extends State<FullKeyboard> {
           ['й', 'ц', 'у', 'к', 'е', 'н', 'г', 'ш', 'щ', 'з', 'х'],
           ['ф', 'ы', 'в', 'а', 'п', 'р', 'о', 'л', 'д', 'ж', 'э'],
           ['я', 'ч', 'с', 'м', 'и', 'т', 'ь', 'б', 'ю'],
-        ];
-      default:
-        return [
-          ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
-          ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', '@'],
-          ['z', 'x', 'c', 'v', 'b', 'n', 'm', '.'],
         ];
     }
   }
@@ -197,12 +189,6 @@ class _FullKeyboardState extends State<FullKeyboard> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            // children: _numberRowSymbols
-            //     .map((symbols) => _buildNumberKey(symbols))
-            //     .toList(),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: layoutKeys[0].map((key) => _buildKey(key)).toList(),
           ),
           Row(
@@ -245,9 +231,9 @@ class _FullKeyboardState extends State<FullKeyboard> {
               ),
               _buildSpecialKey(
                 onTap: _toggleNumeric,
-                child: Text(
+                child: const Text(
                   "123*/",
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white70,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,

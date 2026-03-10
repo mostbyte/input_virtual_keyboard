@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:input_virtual_keyboard/src/inputs/input.dart';
 
 class SearchInput extends StatefulWidget {
-  SearchInput({
+  const SearchInput({
     Key? key,
     this.controller,
     this.name = '',
@@ -130,7 +130,7 @@ class _SearchInputState extends State<SearchInput> {
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                  color: Color(0xff1050BA),
+                  color: const Color(0xff1050BA),
                   borderRadius: BorderRadius.circular(6)),
               child: Image.asset(
                 "assets/search.png",
@@ -151,7 +151,7 @@ class _SearchInputState extends State<SearchInput> {
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                  color: Color(0xffBA1010),
+                  color: const Color(0xffBA1010),
                   borderRadius: BorderRadius.circular(6)),
               child: Image.asset(
                 "assets/close.png",

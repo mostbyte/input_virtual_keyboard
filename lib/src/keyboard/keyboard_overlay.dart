@@ -11,7 +11,7 @@ class KeyboardOverlay {
   static Offset _position = Offset.zero;
   static bool _isVisible = false;
 
-  static KeyboardVisibilityChanged? _listener; // <<–– store the callback
+  static KeyboardVisibilityChanged? _listener;
 
   static void toggleKeyboard(
     BuildContext context,
@@ -20,9 +20,8 @@ class KeyboardOverlay {
     FocusNode focusNode,
     GlobalKey keyboardButtonKey, {
     required KeyboardVisibilityChanged onVisibilityChanged,
-    ValueChanged<String>?
-        onChanged, // optional; listener in Input already covers it
-    VoidCallback? onSubmit, // 👈 add
+    ValueChanged<String>? onChanged,
+    VoidCallback? onSubmit,
   }) {
     if (_overlayEntry == null) {
       _listener = onVisibilityChanged;
@@ -34,27 +33,124 @@ class KeyboardOverlay {
     }
   }
 
+  /// Shared handler for key presses (used by both NumberKeyboard and FullKeyboard).
+  static void _handleKeyPressed(
+    String text,
+    TextEditingController controller,
+    List<TextInputFormatter> formatters,
+    ValueChanged<String>? onChanged,
+  ) {
+    final current = controller.value;
+    TextSelection sel = controller.selection;
+
+    final bool invalid = sel.start < 0 ||
+        sel.end < 0 ||
+        sel.start > current.text.length ||
+        sel.end > current.text.length;
+
+    if (invalid) {
+      final int safeOffset = current.text.length;
+      sel = TextSelection.collapsed(offset: safeOffset);
+    }
+
+    final newText = current.text.replaceRange(sel.start, sel.end, text);
+
+    controller.value = controller.value.copyWith(
+      text: newText,
+      selection: TextSelection.collapsed(
+        offset: sel.start + text.length,
+      ),
+      composing: TextRange.empty,
+    );
+    for (final f in formatters) {
+      controller.value = f.formatEditUpdate(current, controller.value);
+    }
+    onChanged?.call(controller.text);
+  }
+
+  /// Shared handler for backspace (used by both NumberKeyboard and FullKeyboard).
+  static void _handleBackspace(
+    TextEditingController controller,
+    ValueChanged<String>? onChanged,
+  ) {
+    final currentText = controller.text;
+    TextSelection textSelection = controller.selection;
+
+    // Validate selection bounds
+    if (textSelection.start < 0 ||
+        textSelection.end < 0 ||
+        textSelection.start > currentText.length ||
+        textSelection.end > currentText.length) {
+      textSelection = TextSelection.collapsed(offset: currentText.length);
+      controller.selection = textSelection;
+    }
+
+    final selectionLength = textSelection.end - textSelection.start;
+
+    if (selectionLength > 0) {
+      final newText = currentText.replaceRange(
+        textSelection.start,
+        textSelection.end,
+        '',
+      );
+      controller.text = newText;
+      controller.selection = textSelection.copyWith(
+        baseOffset: textSelection.start,
+        extentOffset: textSelection.start,
+      );
+      return;
+    }
+
+    if (textSelection.start == 0) {
+      return;
+    }
+
+    final previousCodeUnit =
+        currentText.codeUnitAt(textSelection.start - 1);
+    int offset = _isUtf16Surrogate(previousCodeUnit) ? 2 : 1;
+    if (textSelection.start - offset < 0) {
+      offset = textSelection.start;
+    }
+    final newStart = textSelection.start - offset;
+    final newText = currentText.replaceRange(
+      newStart,
+      textSelection.start,
+      '',
+    );
+    controller.text = newText;
+    controller.selection = textSelection.copyWith(
+      baseOffset: newStart,
+      extentOffset: newStart,
+    );
+
+    onChanged?.call(controller.text);
+  }
+
+  /// Shared handler for submit.
+  static void _handleSubmit(VoidCallback? onSubmit, FocusNode focusNode) {
+    onSubmit?.call();
+    hideKeyboard();
+    focusNode.unfocus();
+  }
+
   static void showKeyboard(
     BuildContext context,
     TextEditingController controller,
     FocusNode focusNode,
     List<TextInputFormatter> formatters,
     GlobalKey keyboardButtonKey,
-    ValueChanged<String>?
-        onChanged, // optional; listener in Input already covers it
-    VoidCallback? onSubmit, // 👈 add
+    ValueChanged<String>? onChanged,
+    VoidCallback? onSubmit,
   ) {
     if (_overlayEntry != null) {
       return;
     }
 
-    // Get the keyboard button position
     final RenderBox? renderBox =
         keyboardButtonKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
 
     final buttonPosition = renderBox.localToGlobal(Offset.zero);
-    // Initialize the position
     _position = Offset(
       buttonPosition.dx,
       buttonPosition.dy + renderBox.size.height + 10,
@@ -67,7 +163,6 @@ class KeyboardOverlay {
           color: Colors.transparent,
           child: Stack(
             children: [
-              // Transparent overlay to handle taps outside keyboard
               Positioned.fill(
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
@@ -80,7 +175,6 @@ class KeyboardOverlay {
                   ),
                 ),
               ),
-              // Draggable Keyboard
               Positioned(
                 left: _position.dx,
                 top: _position.dy,
@@ -96,211 +190,29 @@ class KeyboardOverlay {
                         if (textInputType == TextInputType.number ||
                             textInputType == TextInputType.phone)
                           NumberKeyboard(
-                            onKeyPressed: (String text) {
-                              final current = controller.value;
-                              TextSelection sel = controller.selection;
-
-                              // ── 1. make sure the selection is inside current.text ──────────────
-                              final bool invalid = sel.start < 0 ||
-                                  sel.end < 0 ||
-                                  sel.start > current.text.length ||
-                                  sel.end > current.text.length;
-
-                              if (invalid) {
-                                // place the caret at the end of the string (or at 0 if empty)
-                                final int safeOffset = current.text.length;
-                                sel =
-                                    TextSelection.collapsed(offset: safeOffset);
-                              }
-
-                              // ── 2. replace the selected range with the key that was pressed ────
-                              final newText = current.text
-                                  .replaceRange(sel.start, sel.end, text);
-
-                              controller.value = controller.value.copyWith(
-                                text: newText,
-                                selection: TextSelection.collapsed(
-                                  offset: sel.start + text.length,
-                                ),
-                                composing: TextRange.empty,
-                              );
-                              for (final f in formatters) {
-                                controller.value = f.formatEditUpdate(
-                                    current, controller.value);
-                              }
-                              onChanged?.call(controller.text); // optional
-                            },
-                            onBackspace: () {
-                              final currentText = controller.text;
-                              TextSelection textSelection = controller.selection;
-
-                              // Validate selection bounds
-                              if (textSelection.start < 0 ||
-                                  textSelection.end < 0 ||
-                                  textSelection.start > currentText.length ||
-                                  textSelection.end > currentText.length) {
-                                // Reset selection to end of text
-                                textSelection = TextSelection.collapsed(
-                                    offset: currentText.length);
-                                controller.selection = textSelection;
-                              }
-
-                              final selectionLength =
-                                  textSelection.end - textSelection.start;
-
-                              if (selectionLength > 0) {
-                                final newText = currentText.replaceRange(
-                                  textSelection.start,
-                                  textSelection.end,
-                                  '',
-                                );
-                                controller.text = newText;
-                                controller.selection = textSelection.copyWith(
-                                  baseOffset: textSelection.start,
-                                  extentOffset: textSelection.start,
-                                );
-                                return;
-                              }
-
-                              if (textSelection.start == 0) {
-                                return;
-                              }
-
-                              final previousCodeUnit = currentText
-                                  .codeUnitAt(textSelection.start - 1);
-                              int offset =
-                                  _isUtf16Surrogate(previousCodeUnit) ? 2 : 1;
-                              // Ensure we don't go below 0
-                              if (textSelection.start - offset < 0) {
-                                offset = textSelection.start;
-                              }
-                              final newStart = textSelection.start - offset;
-                              final newText = currentText.replaceRange(
-                                newStart,
-                                textSelection.start,
-                                '',
-                              );
-                              controller.text = newText;
-                              controller.selection = textSelection.copyWith(
-                                baseOffset: newStart,
-                                extentOffset: newStart,
-                              );
-
-                              onChanged?.call(controller.text); // optional
-                            },
-                            onSubmit: () {
-                              onSubmit
-                                  ?.call(); // this triggers Input._handleSubmit
-                              hideKeyboard();
-                              focusNode.unfocus();
-                            },
+                            onKeyPressed: (text) => _handleKeyPressed(
+                                text, controller, formatters, onChanged),
+                            onBackspace: () =>
+                                _handleBackspace(controller, onChanged),
+                            onSubmit: () =>
+                                _handleSubmit(onSubmit, focusNode),
                           ),
                         if (textInputType == TextInputType.text ||
                             textInputType == TextInputType.multiline ||
                             textInputType == TextInputType.emailAddress)
                           FullKeyboard(
-                            onKeyPressed: (String text) {
-                              final current = controller.value;
-                              TextSelection sel = controller.selection;
-
-                              // ── 1. make sure the selection is inside current.text ──────────────
-                              final bool invalid = sel.start < 0 ||
-                                  sel.end < 0 ||
-                                  sel.start > current.text.length ||
-                                  sel.end > current.text.length;
-
-                              if (invalid) {
-                                // place the caret at the end of the string (or at 0 if empty)
-                                final int safeOffset = current.text.length;
-                                sel =
-                                    TextSelection.collapsed(offset: safeOffset);
-                              }
-
-                              // ── 2. replace the selected range with the key that was pressed ────
-                              final newText = current.text
-                                  .replaceRange(sel.start, sel.end, text);
-
-                              controller.value = controller.value.copyWith(
-                                text: newText,
-                                selection: TextSelection.collapsed(
-                                  offset: sel.start + text.length,
-                                ),
-                                composing: TextRange.empty,
-                              );
-                              for (final f in formatters) {
-                                controller.value = f.formatEditUpdate(
-                                    current, controller.value);
-                              }
-                              onChanged?.call(controller.text); // optional
-                            },
-                            onBackspace: () {
-                              final currentText = controller.text;
-                              TextSelection textSelection = controller.selection;
-
-                              // Validate selection bounds
-                              if (textSelection.start < 0 ||
-                                  textSelection.end < 0 ||
-                                  textSelection.start > currentText.length ||
-                                  textSelection.end > currentText.length) {
-                                // Reset selection to end of text
-                                textSelection = TextSelection.collapsed(
-                                    offset: currentText.length);
-                                controller.selection = textSelection;
-                              }
-
-                              final selectionLength =
-                                  textSelection.end - textSelection.start;
-
-                              if (selectionLength > 0) {
-                                final newText = currentText.replaceRange(
-                                  textSelection.start,
-                                  textSelection.end,
-                                  '',
-                                );
-                                controller.text = newText;
-                                controller.selection = textSelection.copyWith(
-                                  baseOffset: textSelection.start,
-                                  extentOffset: textSelection.start,
-                                );
-                                return;
-                              }
-
-                              if (textSelection.start == 0) {
-                                return;
-                              }
-
-                              final previousCodeUnit = currentText
-                                  .codeUnitAt(textSelection.start - 1);
-                              int offset =
-                                  _isUtf16Surrogate(previousCodeUnit) ? 2 : 1;
-                              // Ensure we don't go below 0
-                              if (textSelection.start - offset < 0) {
-                                offset = textSelection.start;
-                              }
-                              final newStart = textSelection.start - offset;
-                              final newText = currentText.replaceRange(
-                                newStart,
-                                textSelection.start,
-                                '',
-                              );
-                              controller.text = newText;
-                              controller.selection = textSelection.copyWith(
-                                baseOffset: newStart,
-                                extentOffset: newStart,
-                              );
-                              onChanged?.call(controller.text); // optional
-                            },
-                            onSubmit: () {
-                              onSubmit
-                                  ?.call(); // this triggers Input._handleSubmit
-                              hideKeyboard();
-                              focusNode.unfocus();
-                            },
+                            onKeyPressed: (text) => _handleKeyPressed(
+                                text, controller, formatters, onChanged),
+                            onBackspace: () =>
+                                _handleBackspace(controller, onChanged),
+                            onSubmit: () =>
+                                _handleSubmit(onSubmit, focusNode),
                             onLeftArrow: () {
                               final textSelection = controller.selection;
                               final newOffset = textSelection.start - 1;
                               if (newOffset >= 0) {
-                                controller.selection = textSelection.copyWith(
+                                controller.selection =
+                                    textSelection.copyWith(
                                   baseOffset: newOffset,
                                   extentOffset: newOffset,
                                 );
@@ -311,7 +223,8 @@ class KeyboardOverlay {
                               final textSelection = controller.selection;
                               final newOffset = textSelection.start + 1;
                               if (newOffset <= currentText.length) {
-                                controller.selection = textSelection.copyWith(
+                                controller.selection =
+                                    textSelection.copyWith(
                                   baseOffset: newOffset,
                                   extentOffset: newOffset,
                                 );
@@ -319,27 +232,29 @@ class KeyboardOverlay {
                             },
                           ),
                         Positioned(
-                            top: 0,
-                            right: 0,
-                            child: GestureDetector(
-                              onTap: () => hideKeyboard(),
-                              child: Container(
-                                alignment: Alignment.center,
-                                width: 25,
-                                height: 25,
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(15),
-                                    border: Border.all(
-                                      color: Colors.blue,
-                                    ),
-                                    color: Colors.white),
-                                child: const Icon(
-                                  Icons.close,
-                                  size: 20,
-                                  weight: 20,
+                          top: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: () => hideKeyboard(),
+                            child: Container(
+                              alignment: Alignment.center,
+                              width: 25,
+                              height: 25,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(
+                                  color: Colors.blue,
                                 ),
+                                color: Colors.white,
                               ),
-                            ))
+                              child: const Icon(
+                                Icons.close,
+                                size: 20,
+                                weight: 20,
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -351,15 +266,16 @@ class KeyboardOverlay {
       },
     );
 
-    overlayState?.insert(_overlayEntry!);
+    overlayState.insert(_overlayEntry!);
   }
 
   static void hideKeyboard() {
     if (_overlayEntry != null) {
       _overlayEntry?.remove();
+      _overlayEntry?.dispose();
       _overlayEntry = null;
       _isVisible = false;
-      _listener?.call(_isVisible); // 🔔 notify: now hidden
+      _listener?.call(_isVisible);
       _listener = null;
     }
   }
