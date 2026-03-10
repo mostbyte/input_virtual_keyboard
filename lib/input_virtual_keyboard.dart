@@ -1,4 +1,4 @@
-library input_virtual_keyboard;
+library;
 
 import 'package:input_virtual_keyboard/virtual_keyboard_theme.dart';
 

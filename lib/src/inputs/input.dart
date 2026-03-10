@@ -42,7 +42,7 @@ class Input extends StatefulWidget {
   final String? obSecureCharacter;
 
   const Input(
-      {Key? key,
+      {super.key,
       this.controller,
       this.enabled = true,
       required this.name,
@@ -77,8 +77,7 @@ class Input extends StatefulWidget {
       this.suffixBackground,
       this.suffixIcon,
       this.obscureText = false,
-      this.obSecureCharacter})
-      : super(key: key);
+      this.obSecureCharacter});
 
   @override
   State<Input> createState() => _InputState();

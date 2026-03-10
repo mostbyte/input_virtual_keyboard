@@ -4,7 +4,7 @@ import 'package:input_virtual_keyboard/src/inputs/input.dart';
 
 class SearchInput extends StatefulWidget {
   const SearchInput({
-    Key? key,
+    super.key,
     this.controller,
     this.name = '',
     this.hint = '',
@@ -38,7 +38,7 @@ class SearchInput extends StatefulWidget {
     this.suffixWidget,
     this.suffixBackground,
     this.suffixIcon,
-  }) : super(key: key);
+  });
   final TextEditingController? controller;
   final String name;
   final String hint;

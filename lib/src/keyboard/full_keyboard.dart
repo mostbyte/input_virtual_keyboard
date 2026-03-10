@@ -17,7 +17,7 @@ class FullKeyboard extends StatefulWidget {
   final Function(KeyboardLanguage)? onLanguageChanged;
 
   const FullKeyboard({
-    Key? key,
+    super.key,
     required this.onKeyPressed,
     required this.onBackspace,
     required this.onSubmit,
@@ -30,7 +30,7 @@ class FullKeyboard extends StatefulWidget {
     ],
     this.initialLanguage = KeyboardLanguage.english,
     this.onLanguageChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<FullKeyboard> createState() => _FullKeyboardState();
@@ -207,7 +207,7 @@ class _FullKeyboardState extends State<FullKeyboard> {
                     color: _isShiftActive ? Colors.black : Colors.white70,
                   ),
                 ),
-              ...layoutKeys[2].map((key) => _buildKey(key)).toList(),
+              ...layoutKeys[2].map((key) => _buildKey(key)),
               _buildSpecialKey(
                 onTap: widget.onBackspace,
                 child:

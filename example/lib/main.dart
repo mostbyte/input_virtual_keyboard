@@ -60,8 +60,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  changed(p0) {
-    print("Search: $p0");
+  void changed(String? p0) {
+    debugPrint("Search: $p0");
   }
 
   TextEditingController numberController = TextEditingController();

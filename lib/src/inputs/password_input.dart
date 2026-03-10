@@ -4,7 +4,7 @@ import 'package:input_virtual_keyboard/src/inputs/input.dart';
 
 class PasswordInput extends StatefulWidget {
   const PasswordInput({
-    Key? key,
+    super.key,
     this.controller,
     this.name = '',
     this.hint = '',
@@ -40,7 +40,7 @@ class PasswordInput extends StatefulWidget {
     this.suffixIcon,
     this.obsecureText,
     this.obsecureCharacter,
-  }) : super(key: key);
+  });
   final TextEditingController? controller;
   final String name;
   final String hint;

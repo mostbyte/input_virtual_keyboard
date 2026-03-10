@@ -6,11 +6,11 @@ class NumberKeyboard extends StatelessWidget {
   final VoidCallback onSubmit;
 
   const NumberKeyboard({
-    Key? key,
+    super.key,
     required this.onKeyPressed,
     required this.onBackspace,
     required this.onSubmit,
-  }) : super(key: key);
+  });
 
   Widget _buildKey(String text, {Color? backgroundColor, Color? textColor}) {
     return Padding(
