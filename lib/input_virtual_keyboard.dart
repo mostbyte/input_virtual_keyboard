@@ -10,6 +10,7 @@ export 'src/inputs/text_area_input.dart';
 export 'src/inputs/phone_input.dart';
 export 'src/inputs/search_input.dart';
 export 'src/inputs/password_input.dart';
+export 'src/inputs/dropdown_input.dart';
 
 class InputVirtualKeyboard {
   InputVirtualKeyboard._();

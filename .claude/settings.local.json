@@ -9,7 +9,9 @@
       "Bash(flutter upgrade:*)",
       "Bash(cd \"F:\\\\flutter projects\\\\input_virtual_keyboard\" && flutter pub upgrade --major-versions 2>&1)",
       "Bash(cd \"F:\\\\flutter projects\\\\input_virtual_keyboard\\\\example\" && flutter pub upgrade --major-versions 2>&1)",
-      "Bash(cd \"F:\\\\flutter projects\\\\input_virtual_keyboard\" && flutter analyze 2>&1 && flutter test 2>&1)"
+      "Bash(cd \"F:\\\\flutter projects\\\\input_virtual_keyboard\" && flutter analyze 2>&1 && flutter test 2>&1)",
+      "Bash(flutter --version)",
+      "Bash(flutter test:*)"
     ]
   }
 }

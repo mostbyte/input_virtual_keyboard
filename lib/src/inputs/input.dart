@@ -91,6 +91,7 @@ class _InputState extends State<Input> {
       );
   late final FocusNode _focusNode = widget.focusNode ?? FocusNode();
   bool _isKeyboardVisible = false;
+  bool _hasError = false;
   List<TextInputFormatter> _inputFormatter = [];
   final GlobalKey _keyboardButtonKey = GlobalKey();
   String _lastEmitted = '';
@@ -235,7 +236,7 @@ class _InputState extends State<Input> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                border: (widget.isRequired)
+                border: _hasError
                     ? Border.all(color: Colors.red)
                     : Border.all(
                         width: 0, color: widget.borderColor ?? t.borderColor),
@@ -309,11 +310,24 @@ class _InputState extends State<Input> {
                               isCollapsed: true,
                               contentPadding: EdgeInsets.zero,
                             ),
-                            validator: widget.isRequired
-                                ? (v) => (v == null || v.isEmpty)
-                                    ? 'Обязательное поле'
-                                    : null
-                                : null,
+                            validator: (v) {
+                              String? error;
+                              if (widget.isRequired &&
+                                  (v == null || v.isEmpty)) {
+                                error = 'Обязательное поле';
+                              }
+                              error ??= widget.validator?.call(v);
+                              final showError = error != null;
+                              if (showError != _hasError) {
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  if (mounted) {
+                                    setState(() => _hasError = showError);
+                                  }
+                                });
+                              }
+                              return error;
+                            },
                           ),
                         ),
                       ),
