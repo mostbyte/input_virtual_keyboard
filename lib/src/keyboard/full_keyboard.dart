@@ -1,47 +1,70 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
-enum KeyboardLanguage {
-  english,
-  russian,
+import 'package:flutter/material.dart';
+import 'package:input_virtual_keyboard/input_virtual_keyboard.dart';
+
+/// Состояние клавиши Shift.
+enum ShiftState {
+  /// Выключен.
+  off,
+
+  /// Одноразовый: сбрасывается после ввода одного символа.
+  single,
+
+  /// Caps Lock: включается двойным тапом по Shift.
+  locked,
 }
 
 class FullKeyboard extends StatefulWidget {
-  final Function(String) onKeyPressed;
-  final VoidCallback onBackspace;
-  final VoidCallback onSubmit;
-  final VoidCallback? onNumberToggle;
-  final VoidCallback? onLeftArrow;
-  final VoidCallback? onRightArrow;
-  final List<KeyboardLanguage> supportedLanguages;
-  final KeyboardLanguage initialLanguage;
-  final Function(KeyboardLanguage)? onLanguageChanged;
-
   const FullKeyboard({
     super.key,
     required this.onKeyPressed,
     required this.onBackspace,
     required this.onSubmit,
-    this.onNumberToggle,
     this.onLeftArrow,
     this.onRightArrow,
-    this.supportedLanguages = const [
-      KeyboardLanguage.english,
-      KeyboardLanguage.russian
-    ],
-    this.initialLanguage = KeyboardLanguage.english,
-    this.onLanguageChanged,
+    this.layouts,
+    this.initialLayoutCode,
+    this.onLayoutChanged,
+    this.quickKeys = const [],
   });
+
+  final ValueChanged<String> onKeyPressed;
+  final VoidCallback onBackspace;
+  final VoidCallback onSubmit;
+  final VoidCallback? onLeftArrow;
+  final VoidCallback? onRightArrow;
+
+  /// Раскладки. По умолчанию — [InputVirtualKeyboard.layouts].
+  final List<KeyboardLayout>? layouts;
+
+  /// Код начальной раскладки. По умолчанию — последняя использованная.
+  final String? initialLayoutCode;
+
+  final ValueChanged<KeyboardLayout>? onLayoutChanged;
+
+  /// Дополнительный ряд «быстрых» клавиш, вставляющих строку целиком
+  /// (например `['@', '.com', '.uz']` для email-полей).
+  final List<String> quickKeys;
 
   @override
   State<FullKeyboard> createState() => _FullKeyboardState();
 }
 
 class _FullKeyboardState extends State<FullKeyboard> {
-  late KeyboardLanguage _currentLanguage;
-  bool _isShiftActive = false;
-  bool _isNumberMode = false;
+  /// Последняя выбранная раскладка — живёт, пока живо приложение.
+  static String? _sessionLayoutCode;
 
-  final List<List<String>> _numberKeys = [
+  VKTheme get t => InputVirtualKeyboard.theme;
+
+  late List<KeyboardLayout> _layouts;
+  late KeyboardLayout _layout;
+  ShiftState _shift = ShiftState.off;
+  bool _numberMode = false;
+  DateTime? _lastShiftTap;
+  Timer? _backspaceRepeat;
+
+  static const List<List<String>> _numberRows = [
     ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
     ['@', '#', '\$', '&', '+', '(', ')', '/', '_', '*'],
     ['"', '\'', ':', ';', '!', '?', ',', '.', '='],
@@ -50,124 +73,178 @@ class _FullKeyboardState extends State<FullKeyboard> {
   @override
   void initState() {
     super.initState();
-    _currentLanguage = widget.initialLanguage;
+    _layouts = widget.layouts ?? InputVirtualKeyboard.layouts;
+    if (_layouts.isEmpty) {
+      _layouts = const [KeyboardLayout.english];
+    }
+    final preferredCode = widget.initialLayoutCode ??
+        (InputVirtualKeyboard.rememberLayout ? _sessionLayoutCode : null);
+    _layout = _layouts.firstWhere(
+      (l) => l.code == preferredCode,
+      orElse: () => _layouts.first,
+    );
   }
 
-  void _toggleLanguage() {
-    final currentIndex = widget.supportedLanguages.indexOf(_currentLanguage);
-    final nextIndex = (currentIndex + 1) % widget.supportedLanguages.length;
-    setState(() {
-      _currentLanguage = widget.supportedLanguages[nextIndex];
-    });
-    widget.onLanguageChanged?.call(_currentLanguage);
+  @override
+  void dispose() {
+    _backspaceRepeat?.cancel();
+    super.dispose();
   }
 
-  void _toggleShift() {
-    setState(() {
-      _isShiftActive = !_isShiftActive;
-    });
-  }
+  bool get _uppercase => _shift != ShiftState.off && !_numberMode;
 
-  void _toggleNumeric() {
-    setState(() {
-      _isNumberMode = !_isNumberMode;
-    });
-  }
-
-  String _getLanguageText() {
-    switch (_currentLanguage) {
-      case KeyboardLanguage.english:
-        return 'EN';
-      case KeyboardLanguage.russian:
-        return 'RU';
+  void _emit(String text) {
+    widget.onKeyPressed(_uppercase ? text.toUpperCase() : text);
+    if (_shift == ShiftState.single) {
+      setState(() => _shift = ShiftState.off);
     }
   }
 
-  List<List<String>> _getCurrentLayoutKeys() {
-    if (_isNumberMode) {
-      return _numberKeys;
-    }
-
-    switch (_currentLanguage) {
-      case KeyboardLanguage.english:
-        return [
-          ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
-          ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', '@'],
-          ['z', 'x', 'c', 'v', 'b', 'n', 'm', '.'],
-        ];
-      case KeyboardLanguage.russian:
-        return [
-          ['й', 'ц', 'у', 'к', 'е', 'н', 'г', 'ш', 'щ', 'з', 'х'],
-          ['ф', 'ы', 'в', 'а', 'п', 'р', 'о', 'л', 'д', 'ж', 'э'],
-          ['я', 'ч', 'с', 'м', 'и', 'т', 'ь', 'б', 'ю'],
-        ];
-    }
+  void _tapShift() {
+    final now = DateTime.now();
+    final isDoubleTap = _lastShiftTap != null &&
+        now.difference(_lastShiftTap!) < const Duration(milliseconds: 350);
+    _lastShiftTap = now;
+    setState(() {
+      switch (_shift) {
+        case ShiftState.off:
+          _shift = ShiftState.single;
+        case ShiftState.single:
+          _shift = isDoubleTap ? ShiftState.locked : ShiftState.off;
+        case ShiftState.locked:
+          _shift = ShiftState.off;
+      }
+    });
   }
 
-  Widget _buildKey(String text, {String? topText, bool isActive = false}) {
-    final displayText =
-        _isShiftActive && !_isNumberMode ? text.toUpperCase() : text;
+  void _toggleNumberMode() {
+    setState(() => _numberMode = !_numberMode);
+  }
+
+  void _switchLayout() {
+    final index = _layouts.indexOf(_layout);
+    setState(() {
+      _layout = _layouts[(index + 1) % _layouts.length];
+    });
+    if (InputVirtualKeyboard.rememberLayout) {
+      _sessionLayoutCode = _layout.code;
+    }
+    widget.onLayoutChanged?.call(_layout);
+  }
+
+  void _startBackspaceRepeat() {
+    widget.onBackspace();
+    _backspaceRepeat?.cancel();
+    _backspaceRepeat = Timer.periodic(
+      const Duration(milliseconds: 70),
+      (_) => widget.onBackspace(),
+    );
+  }
+
+  void _stopBackspaceRepeat() {
+    _backspaceRepeat?.cancel();
+    _backspaceRepeat = null;
+  }
+
+  List<List<String>> get _rows => _numberMode ? _numberRows : _layout.rows;
+
+  double _spanWidth(double span) =>
+      t.keyWidth * span + t.keySpacing * (span - 1);
+
+  Widget _keyShell({
+    required Widget child,
+    required VoidCallback onTap,
+    VoidCallback? onLongPress,
+    Color? backgroundColor,
+    double? width,
+  }) {
     return Padding(
-      padding: const EdgeInsets.all(4.0),
+      padding: EdgeInsets.all(t.keySpacing / 2),
       child: Material(
-        color: isActive ? Colors.white : const Color(0xFF2D2F33),
-        borderRadius: BorderRadius.circular(8),
+        color: backgroundColor ?? t.keyBackground,
+        borderRadius: BorderRadius.circular(t.keyBorderRadius),
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () => widget.onKeyPressed(
-              _isShiftActive && !_isNumberMode ? text.toUpperCase() : text),
-          child: Container(
-            width: 56,
-            height: 64,
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (topText != null)
-                  Text(
-                    topText,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isActive ? Colors.black : Colors.white54,
-                    ),
-                  ),
-                Text(
-                  displayText,
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: isActive ? Colors.black : Colors.white70,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
+          borderRadius: BorderRadius.circular(t.keyBorderRadius),
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: SizedBox(
+            width: width ?? t.keyWidth,
+            height: t.keyHeight,
+            child: Center(child: child),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSpecialKey({
-    required Widget child,
-    required VoidCallback onTap,
-    Color? backgroundColor,
-    double? width,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.all(4.0),
-      child: Material(
-        color: backgroundColor ?? const Color(0xFF2D2F33),
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: onTap,
-          child: Container(
-            width: 56 * (width != null ? (width) : 1) +
-                (width != null ? (width * 5) : 0),
-            height: 64,
-            alignment: Alignment.center,
-            child: child,
+  Widget _buildKey(String key) {
+    final alt = _numberMode ? null : _layout.longPressAlternatives[key];
+    final display = _uppercase ? key.toUpperCase() : key;
+    return _keyShell(
+      onTap: () => _emit(key),
+      onLongPress: alt == null ? null : () => _emit(alt),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (alt != null)
+            Text(
+              _uppercase ? alt.toUpperCase() : alt,
+              style: TextStyle(
+                fontSize: t.keyTextSize * 0.55,
+                color: t.keySecondaryTextColor,
+              ),
+            ),
+          Text(
+            display,
+            style: TextStyle(
+              fontSize: t.keyTextSize,
+              color: t.keyTextColor,
+              fontWeight: FontWeight.w500,
+            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShiftKey() {
+    final active = _shift != ShiftState.off;
+    return _keyShell(
+      onTap: _tapShift,
+      backgroundColor: active ? t.keyActiveBackground : null,
+      child: Icon(
+        _shift == ShiftState.locked
+            ? Icons.keyboard_capslock
+            : Icons.keyboard_arrow_up,
+        color: active ? t.keyActiveTextColor : t.keyTextColor,
+      ),
+    );
+  }
+
+  Widget _buildBackspaceKey() {
+    // GestureDetector поверх InkWell: одиночный тап — одно удаление,
+    // удержание — автоповтор до отпускания.
+    return GestureDetector(
+      onLongPressStart: (_) => _startBackspaceRepeat(),
+      onLongPressEnd: (_) => _stopBackspaceRepeat(),
+      onLongPressCancel: _stopBackspaceRepeat,
+      child: _keyShell(
+        onTap: widget.onBackspace,
+        child: Icon(Icons.backspace_outlined, color: t.keyTextColor),
+      ),
+    );
+  }
+
+  Widget _buildSpecialText(String text, VoidCallback onTap, {double? width}) {
+    return _keyShell(
+      onTap: onTap,
+      width: width,
+      child: Text(
+        text,
+        style: TextStyle(
+          color: t.keyTextColor,
+          fontSize: t.keyTextSize * 0.8,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
@@ -175,92 +252,74 @@ class _FullKeyboardState extends State<FullKeyboard> {
 
   @override
   Widget build(BuildContext context) {
-    final layoutKeys = _getCurrentLayoutKeys();
+    final rows = _rows;
 
     return Container(
-      // width: 660,
       margin: const EdgeInsets.all(8),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-          color: const Color(0xFF1A1B1E),
-          borderRadius: BorderRadius.circular(16)),
+        color: t.keyboardBackground,
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (widget.quickKeys.isNotEmpty)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (final quick in widget.quickKeys)
+                  _buildSpecialText(
+                    quick,
+                    () => widget.onKeyPressed(quick),
+                    width: _spanWidth(1.5),
+                  ),
+              ],
+            ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: layoutKeys[0].map((key) => _buildKey(key)).toList(),
+            children: rows[0].map(_buildKey).toList(),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: layoutKeys[1].map((key) => _buildKey(key)).toList(),
+            children: rows[1].map(_buildKey).toList(),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (!_isNumberMode)
-                _buildSpecialKey(
-                  onTap: _toggleShift,
-                  backgroundColor: _isShiftActive ? Colors.white : null,
-                  child: Icon(
-                    Icons.keyboard_arrow_up,
-                    color: _isShiftActive ? Colors.black : Colors.white70,
-                  ),
-                ),
-              ...layoutKeys[2].map((key) => _buildKey(key)),
-              _buildSpecialKey(
-                onTap: widget.onBackspace,
-                child:
-                    const Icon(Icons.backspace_outlined, color: Colors.white70),
-              ),
+              if (!_numberMode) _buildShiftKey(),
+              ...rows[2].map(_buildKey),
+              _buildBackspaceKey(),
             ],
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildSpecialKey(
-                onTap: _toggleLanguage,
-                child: Text(
-                  _getLanguageText(),
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+              if (_layouts.length > 1)
+                _buildSpecialText(_layout.code, _switchLayout),
+              _buildSpecialText(
+                _numberMode ? 'АБВ' : '123*/',
+                _toggleNumberMode,
               ),
-              _buildSpecialKey(
-                onTap: _toggleNumeric,
-                child: const Text(
-                  "123*/",
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              _buildSpecialKey(
+              _keyShell(
                 onTap: widget.onLeftArrow ?? () {},
-                child: const Icon(Icons.keyboard_arrow_left,
-                    color: Colors.white70),
+                child: Icon(Icons.keyboard_arrow_left, color: t.keyTextColor),
               ),
-              _buildSpecialKey(
+              _keyShell(
                 onTap: widget.onRightArrow ?? () {},
-                child: const Icon(Icons.keyboard_arrow_right,
-                    color: Colors.white70),
+                child: Icon(Icons.keyboard_arrow_right, color: t.keyTextColor),
               ),
-              _buildSpecialKey(
-                width: 3,
+              _keyShell(
                 onTap: () => widget.onKeyPressed(' '),
-                child: const Icon(Icons.space_bar, color: Colors.white70),
+                width: _spanWidth(3),
+                child: Icon(Icons.space_bar, color: t.keyTextColor),
               ),
               _buildKey('-'),
-              _buildSpecialKey(
-                width: 2,
-                backgroundColor: Colors.blue[800],
+              _keyShell(
                 onTap: widget.onSubmit,
-                child: const Icon(Icons.keyboard_return, color: Colors.white70),
+                width: _spanWidth(2),
+                backgroundColor: t.submitKeyBackground,
+                child: Icon(Icons.keyboard_return, color: t.keyTextColor),
               ),
             ],
           ),
