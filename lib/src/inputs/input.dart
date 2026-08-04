@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:input_virtual_keyboard/input_virtual_keyboard.dart';
-import 'package:input_virtual_keyboard/src/keyboard/keyboard_overlay.dart';
 
 class Input extends StatefulWidget {
   final TextEditingController? controller;
@@ -21,6 +20,10 @@ class Input extends StatefulWidget {
   final List<TextInputFormatter>? inputFormatter;
   final FocusNode? focusNode;
   final bool? useCustomKeyboard;
+
+  /// Открывать клавиатуру автоматически при фокусе.
+  /// null — глобальная настройка [InputVirtualKeyboard.autoShowOnFocus].
+  final bool? autoShowKeyboard;
   final Widget? icon;
   final TextStyle? style;
   final Color? backgroundColor;
@@ -39,85 +42,98 @@ class Input extends StatefulWidget {
   final Color? suffixBackground;
   final Widget? suffixIcon;
   final bool obscureText;
-  final String? obSecureCharacter;
+  final String? obscureCharacter;
 
-  const Input(
-      {super.key,
-      this.controller,
-      this.enabled = true,
-      required this.name,
-      this.hint = "",
-      this.onChanged,
-      this.validator,
-      this.maxLength,
-      this.onSubmitted,
-      this.onEditingComplete,
-      this.initialValue,
-      this.inputFormatter,
-      required this.nextAction,
-      this.autofocus = false,
-      this.isRequired = false,
-      this.focusNode,
-      this.useCustomKeyboard,
-      this.icon,
-      this.style,
-      this.backgroundColor,
-      this.borderColor,
-      this.hintColor,
-      this.textColor,
-      required this.textInputType,
-      this.maxLines = 1,
-      this.minLines,
-      this.expands = false,
-      this.minHeight,
-      this.borderRadius = 8.0,
-      this.prefixWidget,
-      this.prefixBackground,
-      this.suffixWidget,
-      this.suffixBackground,
-      this.suffixIcon,
-      this.obscureText = false,
-      this.obSecureCharacter});
+  /// Встроенная кнопка «глаз» для показа/скрытия пароля.
+  final bool showPasswordToggle;
+
+  /// Встроенный суффикс поиска: лупа, а при непустом тексте — кнопка очистки.
+  final bool showSearchAffix;
+
+  /// Перемешивать цифры на цифровой клавиатуре (PIN-режим).
+  final bool shufflePinDigits;
+
+  const Input({
+    super.key,
+    this.controller,
+    this.enabled = true,
+    this.name = "",
+    this.hint = "",
+    this.onChanged,
+    this.validator,
+    this.maxLength,
+    this.onSubmitted,
+    this.onEditingComplete,
+    this.initialValue,
+    this.inputFormatter,
+    this.nextAction = false,
+    this.autofocus = false,
+    this.isRequired = false,
+    this.focusNode,
+    this.useCustomKeyboard,
+    this.autoShowKeyboard,
+    this.icon,
+    this.style,
+    this.backgroundColor,
+    this.borderColor,
+    this.hintColor,
+    this.textColor,
+    required this.textInputType,
+    this.maxLines = 1,
+    this.minLines,
+    this.expands = false,
+    this.minHeight,
+    this.borderRadius = 8.0,
+    this.prefixWidget,
+    this.prefixBackground,
+    this.suffixWidget,
+    this.suffixBackground,
+    this.suffixIcon,
+    this.obscureText = false,
+    this.obscureCharacter,
+    this.showPasswordToggle = false,
+    this.showSearchAffix = false,
+    this.shufflePinDigits = false,
+  }) : assert(
+          controller == null || initialValue == null,
+          'Передайте либо controller, либо initialValue — не оба сразу',
+        );
 
   @override
   State<Input> createState() => _InputState();
 }
 
 class _InputState extends State<Input> {
-  final t = InputVirtualKeyboard.theme;
+  VKTheme get t => InputVirtualKeyboard.theme;
   late final TextEditingController _controller = widget.controller ??
-      TextEditingController(
-        text: widget.initialValue,
-      );
+      TextEditingController(text: widget.initialValue);
   late final FocusNode _focusNode = widget.focusNode ?? FocusNode();
   bool _isKeyboardVisible = false;
-  bool _hasError = false;
-  List<TextInputFormatter> _inputFormatter = [];
+  String? _errorText;
+  late bool _obscured = widget.obscureText;
   final GlobalKey _keyboardButtonKey = GlobalKey();
   String _lastEmitted = '';
   late bool _useCustomKeyboard;
 
+  bool get _autoShow =>
+      widget.autoShowKeyboard ?? InputVirtualKeyboard.autoShowOnFocus;
+
+  List<TextInputFormatter> get _effectiveFormatters => [
+        if (widget.maxLength != null)
+          LengthLimitingTextInputFormatter(widget.maxLength),
+        ...?widget.inputFormatter,
+      ];
+
   @override
   void initState() {
     super.initState();
-    // Используем локальное значение, иначе глобальную настройку
-    // На мобильных платформах всегда отключаем кастомную клавиатуру
+    // На мобильных платформах всегда используем системную клавиатуру.
     final platform = defaultTargetPlatform;
     if (platform == TargetPlatform.android || platform == TargetPlatform.iOS) {
       _useCustomKeyboard = false;
     } else {
       _useCustomKeyboard =
           widget.useCustomKeyboard ?? InputVirtualKeyboard.useCustomKeyboard;
-    }
-    KeyboardOverlay.textInputType = widget.textInputType;
-
-    if (widget.inputFormatter != null) {
-      _inputFormatter = [...?widget.inputFormatter];
-      if (widget.maxLength != null) {
-        _inputFormatter.add(LengthLimitingTextInputFormatter(widget.maxLength));
-      }
-    } else if (widget.maxLength != null) {
-      _inputFormatter.add(LengthLimitingTextInputFormatter(widget.maxLength));
     }
 
     _focusNode.addListener(_handleFocusChange);
@@ -126,10 +142,18 @@ class _InputState extends State<Input> {
   }
 
   @override
+  void didUpdateWidget(covariant Input oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.obscureText != oldWidget.obscureText) {
+      _obscured = widget.obscureText;
+    }
+  }
+
+  @override
   void dispose() {
     _focusNode.removeListener(_handleFocusChange);
     _controller.removeListener(_emitIfChanged);
-    KeyboardOverlay.hideKeyboard();
+    KeyboardOverlay.hideIfOwner(this);
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -140,86 +164,167 @@ class _InputState extends State<Input> {
   }
 
   void _handleFocusChange() {
-    if (!_focusNode.hasFocus) {
-      KeyboardOverlay.hideKeyboard();
-      if (mounted) {
-        setState(() {
-          _isKeyboardVisible = false;
+    if (_focusNode.hasFocus) {
+      if (_autoShow &&
+          _useCustomKeyboard &&
+          widget.enabled &&
+          !_isKeyboardVisible) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _focusNode.hasFocus && !_isKeyboardVisible) {
+            _showKeyboard();
+          }
         });
       }
+    } else {
+      KeyboardOverlay.hideIfOwner(this);
     }
   }
 
   void _handleSubmit() {
-    // 1) fire the external callback
     widget.onSubmitted?.call(_controller.text);
-
-    // 2) optional: onEditingComplete if you expose it
     widget.onEditingComplete?.call();
-
-    // 3) focus behavior like the system keyboard
+    KeyboardOverlay.hideIfOwner(this);
     if (widget.nextAction) {
       FocusScope.of(context).nextFocus();
     } else {
       _focusNode.unfocus();
     }
-
-    // 4) hide your overlay
-    KeyboardOverlay.hideKeyboard();
   }
 
   void _emitIfChanged() {
-    final t = _controller.text;
-    if (t != _lastEmitted) {
-      _lastEmitted = t;
-      widget.onChanged?.call(t); // <- fires for overlay & system input
+    final text = _controller.text;
+    if (text != _lastEmitted) {
+      _lastEmitted = text;
+      widget.onChanged?.call(text);
     }
   }
 
+  void _onKeyboardVisibilityChanged(bool visible) {
+    if (mounted) {
+      setState(() => _isKeyboardVisible = visible);
+    } else {
+      _isKeyboardVisible = visible;
+    }
+  }
+
+  void _showKeyboard() {
+    KeyboardOverlay.showKeyboard(
+      context,
+      owner: this,
+      inputType: widget.textInputType,
+      controller: _controller,
+      focusNode: _focusNode,
+      formatters: _effectiveFormatters,
+      anchorKey: _keyboardButtonKey,
+      onSubmit: _handleSubmit,
+      shuffleDigits: widget.shufflePinDigits,
+      onVisibilityChanged: _onKeyboardVisibilityChanged,
+    );
+  }
+
   void _toggleKeyboard() {
-    setState(() {
-      _isKeyboardVisible = !_isKeyboardVisible;
-    });
-    final formatters = <TextInputFormatter>[
-      if (widget.maxLength != null)
-        LengthLimitingTextInputFormatter(widget.maxLength),
-      ...?widget.inputFormatter,
-    ];
-    KeyboardOverlay.textInputType = widget.textInputType;
     KeyboardOverlay.toggleKeyboard(
       context,
-      _controller,
-      formatters,
-      _focusNode,
-      _keyboardButtonKey,
+      owner: this,
+      inputType: widget.textInputType,
+      controller: _controller,
+      focusNode: _focusNode,
+      formatters: _effectiveFormatters,
+      anchorKey: _keyboardButtonKey,
       onSubmit: _handleSubmit,
-      // show: _isKeyboardVisible,
-      onVisibilityChanged: (bool visible) {
-        if (mounted) {
-          setState(() => _isKeyboardVisible = visible);
+      shuffleDigits: widget.shufflePinDigits,
+      onVisibilityChanged: _onKeyboardVisibilityChanged,
+    );
+  }
+
+  Widget _buildPasswordToggle() {
+    return InkWell(
+      onTap: () => setState(() => _obscured = !_obscured),
+      child: SizedBox(
+        width: 18,
+        height: 24,
+        child: Image.asset(
+          _obscured ? "assets/eye_close.png" : "assets/eye.png",
+          color: _obscured ? const Color(0xff9C9AA5) : t.primaryColor,
+          package: 'input_virtual_keyboard',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchAffix() {
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: _controller,
+      builder: (context, value, _) {
+        if (value.text.isEmpty) {
+          return Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: t.primaryColor,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Image.asset(
+              "assets/search.png",
+              package: 'input_virtual_keyboard',
+              width: 9,
+              height: 9,
+            ),
+          );
         }
+        return InkWell(
+          onTap: () {
+            _controller.clear();
+            widget.onSubmitted?.call('');
+          },
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: const Color(0xffBA1010),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Image.asset(
+              "assets/close.png",
+              package: 'input_virtual_keyboard',
+              width: 9,
+              height: 9,
+            ),
+          ),
+        );
       },
     );
   }
 
+  Widget? get _effectiveSuffixIcon {
+    if (widget.showPasswordToggle) return _buildPasswordToggle();
+    if (widget.showSearchAffix) return _buildSearchAffix();
+    return widget.suffixIcon;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final suffixIcon = _effectiveSuffixIcon;
+    final hasError = _errorText != null;
+
     return SizedBox(
       width: double.infinity,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          (_useCustomKeyboard)
-              ? SizedBox(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (_useCustomKeyboard)
+                SizedBox(
                   width: 30,
                   child: Row(
                     children: [
                       if (widget.icon != null) widget.icon!,
                       GestureDetector(
                         key: _keyboardButtonKey,
-                        onTap: () {
-                          _toggleKeyboard();
-                        },
+                        onTap: widget.enabled ? _toggleKeyboard : null,
                         child: Image.asset(
                           _isKeyboardVisible
                               ? "assets/active_keyboard.png"
@@ -231,134 +336,153 @@ class _InputState extends State<Input> {
                       ),
                     ],
                   ),
-                )
-              : const SizedBox(),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                border: _hasError
-                    ? Border.all(color: Colors.red)
-                    : Border.all(
-                        width: 0, color: widget.borderColor ?? t.borderColor),
-                color: widget.backgroundColor ?? t.backgroundColor,
-                borderRadius: BorderRadius.circular(widget.borderRadius),
-              ),
-              child: Row(
-                children: [
-                  if (widget.prefixWidget != null)
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(widget.borderRadius),
-                          bottomLeft: Radius.circular(widget.borderRadius),
-                        ),
-                        color: widget.prefixBackground ??
-                            const Color(0xff1050BA),
-                      ),
-                      alignment: Alignment.center,
-                      height: widget.minHeight ?? t.minHeight,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: widget.prefixWidget,
-                    ),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      alignment: Alignment.centerLeft,
-                      decoration: const BoxDecoration(),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                            maxHeight:
-                                widget.textInputType == TextInputType.multiline
-                                    ? 200
-                                    : widget.minHeight ?? t.minHeight,
-                            minHeight: widget.minHeight ?? t.minHeight),
-                        child: Center(
-                          child: TextFormField(
-                            obscuringCharacter: widget.obSecureCharacter ?? '•',
-                            obscureText: widget.obscureText,
-                            onFieldSubmitted: (_) => _handleSubmit(),
-                            onEditingComplete: () => _handleSubmit(),
-                            style: widget.style ??
-                                TextStyle(
-                                  color: widget.textColor ?? t.textColor,
-                                  fontSize: t.textSize,
-                                ),
-                            key: ValueKey(widget.name),
-                            controller: _controller,
-                            focusNode: _focusNode,
-                            keyboardType: widget.textInputType,
-                            maxLines: widget.expands ? null : widget.maxLines,
-                            minLines: widget.expands ? null : widget.minLines,
-                            textAlignVertical: TextAlignVertical.top,
-                            inputFormatters: [
-                              if (widget.maxLength != null)
-                                LengthLimitingTextInputFormatter(
-                                    widget.maxLength),
-                              ...?widget.inputFormatter,
-                            ],
-                            expands: widget.expands,
-                            // readOnly: widget.useCustomKeyboard, // отключаем системную
-                            textInputAction: widget.nextAction
-                                ? TextInputAction.next
-                                : TextInputAction.done,
-                            decoration: InputDecoration(
-                              hintText: widget.hint,
-                              hintStyle: TextStyle(
-                                      color: widget.hintColor ?? t.hintColor)
-                                  .copyWith(fontSize: t.textSize),
-                              border: InputBorder.none,
-                              isCollapsed: true,
-                              contentPadding: EdgeInsets.zero,
+                ),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: hasError
+                        ? Border.all(color: t.errorColor)
+                        : Border.all(
+                            width: 0,
+                            color: widget.borderColor ?? t.borderColor,
+                          ),
+                    color: widget.backgroundColor ?? t.backgroundColor,
+                    borderRadius: BorderRadius.circular(widget.borderRadius),
+                  ),
+                  child: Row(
+                    children: [
+                      if (widget.prefixWidget != null)
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(widget.borderRadius),
+                              bottomLeft: Radius.circular(widget.borderRadius),
                             ),
-                            validator: (v) {
-                              String? error;
-                              if (widget.isRequired &&
-                                  (v == null || v.isEmpty)) {
-                                error = 'Обязательное поле';
-                              }
-                              error ??= widget.validator?.call(v);
-                              final showError = error != null;
-                              if (showError != _hasError) {
-                                WidgetsBinding.instance
-                                    .addPostFrameCallback((_) {
-                                  if (mounted) {
-                                    setState(() => _hasError = showError);
+                            color: widget.prefixBackground ?? t.primaryColor,
+                          ),
+                          alignment: Alignment.center,
+                          height: widget.minHeight ?? t.minHeight,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: widget.prefixWidget,
+                        ),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          alignment: Alignment.centerLeft,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight: widget.textInputType ==
+                                      TextInputType.multiline
+                                  ? 200
+                                  : widget.minHeight ?? t.minHeight,
+                              minHeight: widget.minHeight ?? t.minHeight,
+                            ),
+                            child: Center(
+                              child: TextFormField(
+                                enabled: widget.enabled,
+                                autofocus: widget.autofocus,
+                                obscuringCharacter:
+                                    widget.obscureCharacter ?? '•',
+                                obscureText: _obscured,
+                                onFieldSubmitted: (_) => _handleSubmit(),
+                                onEditingComplete: () => _handleSubmit(),
+                                style: widget.style ??
+                                    TextStyle(
+                                      color: widget.textColor ?? t.textColor,
+                                      fontSize: t.textSize,
+                                    ),
+                                key: ValueKey(widget.name),
+                                controller: _controller,
+                                focusNode: _focusNode,
+                                keyboardType: widget.textInputType,
+                                maxLines:
+                                    widget.expands ? null : widget.maxLines,
+                                minLines:
+                                    widget.expands ? null : widget.minLines,
+                                textAlignVertical: TextAlignVertical.top,
+                                inputFormatters: _effectiveFormatters,
+                                expands: widget.expands,
+                                textInputAction: widget.nextAction
+                                    ? TextInputAction.next
+                                    : TextInputAction.done,
+                                decoration: InputDecoration(
+                                  hintText: widget.hint,
+                                  hintStyle: TextStyle(
+                                    color: widget.hintColor ?? t.hintColor,
+                                    fontSize: t.textSize,
+                                  ),
+                                  border: InputBorder.none,
+                                  isCollapsed: true,
+                                  contentPadding: EdgeInsets.zero,
+                                  // Текст ошибки рисуем сами под полем —
+                                  // встроенный клипается из-за isCollapsed.
+                                  errorStyle: const TextStyle(
+                                    fontSize: 0.01,
+                                    height: 0.01,
+                                    color: Colors.transparent,
+                                  ),
+                                ),
+                                validator: (v) {
+                                  String? error;
+                                  if (widget.isRequired &&
+                                      (v == null || v.isEmpty)) {
+                                    error = 'Обязательное поле';
                                   }
-                                });
-                              }
-                              return error;
-                            },
+                                  error ??= widget.validator?.call(v);
+                                  if (error != _errorText) {
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      if (mounted) {
+                                        setState(() => _errorText = error);
+                                      }
+                                    });
+                                  }
+                                  return error;
+                                },
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  if (widget.suffixIcon != null)
-                    Container(
-                      alignment: Alignment.center,
-                      height: widget.minHeight ?? t.minHeight,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: widget.suffixIcon,
-                    ),
-                  if (widget.suffixWidget != null)
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(widget.borderRadius),
-                          bottomRight: Radius.circular(widget.borderRadius),
+                      if (suffixIcon != null)
+                        Container(
+                          alignment: Alignment.center,
+                          height: widget.minHeight ?? t.minHeight,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: suffixIcon,
                         ),
-                        color: widget.suffixBackground ??
-                            const Color(0xff1050BA),
-                      ),
-                      alignment: Alignment.center,
-                      height: widget.minHeight ?? t.minHeight,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: widget.suffixWidget,
-                    ),
-                ],
+                      if (widget.suffixWidget != null)
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              topRight: Radius.circular(widget.borderRadius),
+                              bottomRight:
+                                  Radius.circular(widget.borderRadius),
+                            ),
+                            color: widget.suffixBackground ?? t.primaryColor,
+                          ),
+                          alignment: Alignment.center,
+                          height: widget.minHeight ?? t.minHeight,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: widget.suffixWidget,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (hasError)
+            Padding(
+              padding: EdgeInsets.only(
+                top: 4,
+                left: _useCustomKeyboard ? 30 : 0,
+              ),
+              child: Text(
+                _errorText!,
+                style: TextStyle(color: t.errorColor, fontSize: 12),
               ),
             ),
-          ),
         ],
       ),
     );
