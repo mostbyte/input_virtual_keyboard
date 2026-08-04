@@ -197,8 +197,8 @@ class KeyboardOverlay {
   }
 
   // ---------------------------------------------------------------------------
-  // Обработчики редактирования. Вынесены в статические методы, чтобы их можно
-  // было покрыть юнит-тестами без построения виджетов.
+  // Публичные обработчики редактирования: их использует сам оверлей, но они
+  // пригодны и для standalone-встраивания FullKeyboard/NumberKeyboard.
   // ---------------------------------------------------------------------------
 
   static TextEditingValue _applyFormatters(
@@ -222,7 +222,7 @@ class KeyboardOverlay {
         selection.end <= text.length;
   }
 
-  @visibleForTesting
+  /// Вставка текста в позицию курсора с прогоном через [formatters].
   static void handleKeyPressed(
     String text,
     TextEditingController controller,
@@ -245,7 +245,10 @@ class KeyboardOverlay {
     onChanged?.call(controller.text);
   }
 
-  @visibleForTesting
+
+  /// Backspace: удаление выделения или символа перед курсором
+  /// (суррогатные пары — целиком), с прогоном через [formatters]
+  /// и перешагиванием разделителей маски.
   static void handleBackspace(
     TextEditingController controller,
     List<TextInputFormatter> formatters, [
@@ -304,7 +307,8 @@ class KeyboardOverlay {
     onChanged?.call(controller.text);
   }
 
-  @visibleForTesting
+
+  /// Сдвиг курсора на один символ (суррогатные пары — целиком).
   static void moveCursor(TextEditingController controller, int direction) {
     final text = controller.text;
     final selection = controller.selection;
