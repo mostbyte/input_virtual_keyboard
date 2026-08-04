@@ -1,75 +1,97 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
-
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
-
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
-
 # Input Virtual Keyboard
 
-A Flutter package that provides a customizable virtual keyboard with multiple language support.
+Кастомизируемая виртуальная клавиатура и набор готовых полей ввода для Flutter-приложений на десктопе (POS-терминалы, киоски, дашборды). На Android/iOS виртуальная клавиатура автоматически отключается — используется системная.
 
-## Features
+## Возможности
 
-- Custom virtual keyboard with English and Russian language support
-- Floating keyboard overlay
-- Active/Passive keyboard state indicators
-- Shift key functionality for special characters
-- Arrow key navigation
-- Backspace and submit buttons
+- **Полная клавиатура** с раскладками EN / РУ / UZ (латиница) / ЎЗ (кириллица) и поддержкой собственных раскладок
+- **Цифровая клавиатура** с клавишей `00`, настраиваемым десятичным разделителем и режимом телефона (`+`)
+- **Умный Shift**: одноразовый (сбрасывается после символа), Caps Lock по двойному тапу
+- **Долгое нажатие**: автоповтор Backspace; альтернативные символы (`е` → `ё`, `o` → `oʻ`, `g` → `gʻ`)
+- **Быстрые клавиши** для email-полей: `@`, `.com`, `.uz`, `.ru`
+- **PIN-режим** для пароля: цифровая клавиатура с опциональным перемешиванием цифр
+- **Плавающая** (перетаскиваемая, с прижатием к границам экрана) или **прижатая к низу** (docked) клавиатура
+- Автопоказ клавиатуры при фокусе (опционально)
+- Запоминание последней раскладки и позиции клавиатуры в рамках сессии
+- Анимация появления/скрытия
+- Готовые поля: `TextInput`, `NumberInput`, `TextAreaInput`, `PhoneInput` (маска +998), `SearchInput`, `PasswordInput`, `DropdownInput<T>`
+- Валидация с текстом ошибки под полем, тема через `VKTheme`
 
-## Getting Started
+## Быстрый старт
 
-1. Add the package to your pubspec.yaml:
-
-```yaml
-dependencies:
-  input_virtual_keyboard: ^0.0.1
+```dart
+// main.dart — init опционален, без него используются значения по умолчанию
+await InputVirtualKeyboard.init(
+  theme: const VKTheme(minHeight: 44, textSize: 15),
+  autoShowOnFocus: true,                // открывать клавиатуру при фокусе
+  placement: VKPlacement.floating,      // или VKPlacement.docked
+  layouts: KeyboardLayout.all,          // EN / РУ / UZ / ЎЗ
+  decimalSeparator: ',',
+);
+runApp(const MyApp());
 ```
-
-2. Add the keyboard icons to your assets:
-
-Create an `assets` directory in your package and add two icons:
-- `active_keyboard.png`: The keyboard icon when the virtual keyboard is active
-- `passive_keyboard.png`: The keyboard icon when the virtual keyboard is inactive
-
-The recommended size for the keyboard icons is 24x24 pixels.
-
-## Usage
 
 ```dart
 TextInput(
-  name: 'my_input',
-  hint: 'Enter text',
-  useCustomKeyboard: true, // Enable/disable custom keyboard
-  nextAction: true, // Show next action button
+  name: 'title',
+  hint: 'Название',
+  isRequired: true,
+  onChanged: (v) => print(v),
+)
+
+PasswordInput(
+  name: 'pin',
+  hint: 'PIN-код',
+  pinMode: true,       // цифровая клавиатура
+  shufflePin: true,    // перемешать цифры (защита от подглядывания)
+  maxLength: 4,
+)
+
+DropdownInput<int>(
+  name: 'filial',
+  hint: 'Филиал',
+  items: const [
+    DropdownEntry(1, 'Филиал №1'),
+    DropdownEntry(2, 'Склад'),
+  ],
+  onChanged: (id) => print(id),
 )
 ```
 
-## Keyboard Icons
+## Своя раскладка
 
-Place the following files in your assets directory:
+```dart
+const kazakh = KeyboardLayout(
+  code: 'ҚЗ',
+  name: 'Қазақша',
+  rows: [
+    ['й', 'ц', 'у', 'к', 'е', 'н', 'г', 'ш', 'щ', 'з', 'х'],
+    ['ф', 'ы', 'в', 'а', 'п', 'р', 'о', 'л', 'д', 'ж', 'э'],
+    ['я', 'ч', 'с', 'м', 'и', 'т', 'ь', 'б', 'ю'],
+  ],
+  longPressAlternatives: {'к': 'қ', 'г': 'ғ', 'у': 'ұ'},
+);
 
-1. active_keyboard.png:
-   - Size: 24x24 pixels
-   - Color: #2196F3 (Blue)
-   - Description: Keyboard icon with a filled/solid style
+await InputVirtualKeyboard.init(
+  layouts: [KeyboardLayout.russian, kazakh],
+);
+```
 
-2. passive_keyboard.png:
-   - Size: 24x24 pixels
-   - Color: #9E9E9E (Grey)
-   - Description: Keyboard icon with an outline style
+## Выбор клавиатуры по типу поля
 
-You can use any keyboard icon design that matches your app's theme, but make sure to maintain the naming convention and place them in the assets directory.
+| `textInputType`            | Клавиатура                              |
+| -------------------------- | ---------------------------------------- |
+| `number`                   | Цифровая (`00`, десятичный разделитель) |
+| `phone`                    | Цифровая с `+`                           |
+| `emailAddress`             | Полная + быстрые клавиши `@`/`.com`/…   |
+| остальные                  | Полная                                   |
 
-## Additional information
+## Тема
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+Все цвета и размеры клавиш настраиваются через `VKTheme`: `keyboardBackground`, `keyBackground`, `keyTextColor`, `submitKeyBackground`, `keyWidth`/`keyHeight`/`keySpacing` и т.д. См. [virtual_keyboard_theme.dart](lib/virtual_keyboard_theme.dart).
+
+## Тесты
+
+```bash
+flutter test
+```
