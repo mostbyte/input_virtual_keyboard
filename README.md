@@ -1,31 +1,33 @@
 # Input Virtual Keyboard
 
-Кастомизируемая виртуальная клавиатура и набор готовых полей ввода для Flutter-приложений на десктопе (POS-терминалы, киоски, дашборды). На Android/iOS виртуальная клавиатура автоматически отключается — используется системная.
+[Русская версия](https://github.com/mostbyte/input_virtual_keyboard/blob/master/README.ru.md)
 
-## Возможности
+A customizable on-screen virtual keyboard and a set of ready-made input widgets for Flutter desktop applications (POS terminals, kiosks, dashboards). On Android/iOS the virtual keyboard is disabled automatically and the system keyboard is used instead.
 
-- **Полная клавиатура** с раскладками EN / РУ / UZ (латиница) / ЎЗ (кириллица) и поддержкой собственных раскладок
-- **Цифровая клавиатура** с клавишей `00`, настраиваемым десятичным разделителем и режимом телефона (`+`)
-- **Умный Shift**: одноразовый (сбрасывается после символа), Caps Lock по двойному тапу
-- **Долгое нажатие**: автоповтор Backspace; альтернативные символы (`е` → `ё`, `o` → `oʻ`, `g` → `gʻ`)
-- **Быстрые клавиши** для email-полей: `@`, `.com`, `.uz`, `.ru`
-- **PIN-режим** для пароля: цифровая клавиатура с опциональным перемешиванием цифр
-- **Плавающая** (перетаскиваемая, с прижатием к границам экрана) или **прижатая к низу** (docked) клавиатура
-- Автопоказ клавиатуры при фокусе (опционально)
-- Запоминание последней раскладки и позиции клавиатуры в рамках сессии
-- Анимация появления/скрытия
-- Готовые поля: `TextInput`, `NumberInput`, `TextAreaInput`, `PhoneInput` (маска +998), `SearchInput`, `PasswordInput`, `DropdownInput<T>`
-- Валидация с текстом ошибки под полем, тема через `VKTheme`
+## Features
 
-## Быстрый старт
+- **Full keyboard** with EN / RU / Uzbek-Latin / Uzbek-Cyrillic layouts and support for custom layouts
+- **Numeric keyboard** with a `00` key, configurable decimal separator and a phone mode (`+`)
+- **Smart Shift**: one-shot (resets after one character), Caps Lock on double-tap
+- **Long press**: backspace auto-repeat; alternative characters (`е` → `ё`, `o` → `oʻ`, `g` → `gʻ`)
+- **Quick keys** for email fields: `@`, `.com`, `.uz`, `.ru`
+- **PIN mode** for password fields: numeric keyboard with optional digit shuffling
+- **Floating** (draggable, clamped to screen bounds) or **docked** (pinned to the bottom edge) keyboard
+- Optional auto-show on focus
+- Remembers the last layout and the dragged keyboard position within a session
+- Show/hide animation
+- Ready-made fields: `TextInput`, `NumberInput`, `TextAreaInput`, `PhoneInput` (+998 mask), `SearchInput`, `PasswordInput`, `DropdownInput<T>`
+- Validation with an error message below the field, theming via `VKTheme`
+
+## Quick start
 
 ```dart
-// main.dart — init опционален, без него используются значения по умолчанию
+// main.dart — init is optional; sane defaults apply without it
 await InputVirtualKeyboard.init(
   theme: const VKTheme(minHeight: 44, textSize: 15),
-  autoShowOnFocus: true,                // открывать клавиатуру при фокусе
-  placement: VKPlacement.floating,      // или VKPlacement.docked
-  layouts: KeyboardLayout.all,          // EN / РУ / UZ / ЎЗ
+  autoShowOnFocus: true,                // open the keyboard on focus
+  placement: VKPlacement.floating,      // or VKPlacement.docked
+  layouts: KeyboardLayout.all,          // EN / RU / UZ-Latin / UZ-Cyrillic
   decimalSeparator: ',',
 );
 runApp(const MyApp());
@@ -34,31 +36,31 @@ runApp(const MyApp());
 ```dart
 TextInput(
   name: 'title',
-  hint: 'Название',
+  hint: 'Title',
   isRequired: true,
   onChanged: (v) => print(v),
 )
 
 PasswordInput(
   name: 'pin',
-  hint: 'PIN-код',
-  pinMode: true,       // цифровая клавиатура
-  shufflePin: true,    // перемешать цифры (защита от подглядывания)
+  hint: 'PIN code',
+  pinMode: true,       // numeric keyboard, digits only
+  shufflePin: true,    // shuffle digits (shoulder-surfing protection)
   maxLength: 4,
 )
 
 DropdownInput<int>(
-  name: 'filial',
-  hint: 'Филиал',
+  name: 'branch',
+  hint: 'Branch',
   items: const [
-    DropdownEntry(1, 'Филиал №1'),
-    DropdownEntry(2, 'Склад'),
+    DropdownEntry(1, 'Branch #1'),
+    DropdownEntry(2, 'Warehouse'),
   ],
   onChanged: (id) => print(id),
 )
 ```
 
-## Своя раскладка
+## Custom layout
 
 ```dart
 const kazakh = KeyboardLayout(
@@ -77,20 +79,33 @@ await InputVirtualKeyboard.init(
 );
 ```
 
-## Выбор клавиатуры по типу поля
+## Keyboard selection by field type
 
-| `textInputType`            | Клавиатура                              |
-| -------------------------- | ---------------------------------------- |
-| `number`                   | Цифровая (`00`, десятичный разделитель) |
-| `phone`                    | Цифровая с `+`                           |
-| `emailAddress`             | Полная + быстрые клавиши `@`/`.com`/…   |
-| остальные                  | Полная                                   |
+| `textInputType` | Keyboard                                  |
+| --------------- | ----------------------------------------- |
+| `number`        | Numeric (`00`, decimal separator)         |
+| `phone`         | Numeric with `+`                          |
+| `emailAddress`  | Full + quick keys `@`/`.com`/…            |
+| everything else | Full                                      |
 
-## Тема
+## Standalone keyboards
 
-Все цвета и размеры клавиш настраиваются через `VKTheme`: `keyboardBackground`, `keyBackground`, `keyTextColor`, `submitKeyBackground`, `keyWidth`/`keyHeight`/`keySpacing` и т.д. См. [virtual_keyboard_theme.dart](lib/virtual_keyboard_theme.dart).
+`FullKeyboard` and `NumberKeyboard` can be embedded directly (e.g. a custom PIN pad) without the overlay. Use the public editing handlers so formatters and surrogate pairs are handled correctly:
 
-## Тесты
+```dart
+FullKeyboard(
+  onKeyPressed: (text) =>
+      KeyboardOverlay.handleKeyPressed(text, controller, const []),
+  onBackspace: () => KeyboardOverlay.handleBackspace(controller, const []),
+  onSubmit: () => print(controller.text),
+)
+```
+
+## Theming
+
+All key colors and sizes are configurable via `VKTheme`: `keyboardBackground`, `keyBackground`, `keyTextColor`, `submitKeyBackground`, `keyWidth`/`keyHeight`/`keySpacing`, etc.
+
+## Tests
 
 ```bash
 flutter test
