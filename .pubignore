@@ -1,0 +1,29 @@
+# ВАЖНО: .pubignore полностью заменяет .gitignore при публикации,
+# поэтому здесь продублированы и его правила.
+
+# Артефакты сборки и тулинга
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+.idea/
+*.iml
+*.log
+.DS_Store
+
+# Внутренние файлы разработки — не публикуем на pub.dev
+.claude/
+CLAUDE.md
+
+# Пример: на pub.dev нужен только example/lib + pubspec,
+# платформенные папки только раздувают архив
+example/android/
+example/ios/
+example/linux/
+example/macos/
+example/windows/
+example/web/
+example/test/
+example/.metadata
+example/analysis_options.yaml

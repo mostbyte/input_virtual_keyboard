@@ -1,15 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:input_virtual_keyboard/input_virtual_keyboard.dart';
 
+/// Типизированный элемент выпадающего списка.
+class DropdownEntry<T> {
+  const DropdownEntry(this.value, this.label);
+
+  final T value;
+  final String label;
+}
+
 class DropdownInput<T> extends StatefulWidget {
   final String name;
   final String hint;
   final bool enabled;
   final bool isRequired;
+
+  /// Типизированные элементы списка. Предпочтительный способ.
+  final List<DropdownEntry<T>> items;
+
+  /// Устаревший формат: список карт с ключами `index` (значение) и `value`
+  /// (подпись). Используется, только если [items] пуст.
+  @Deprecated('Используйте items вместо options')
   final List<Map<String, dynamic>> options;
+
+  /// Выбранное значение.
+  final T? value;
+
+  /// Устаревшее имя для [value].
+  @Deprecated('Используйте value вместо result')
   final dynamic result;
-  final Function(dynamic)? onChanged;
-  final String? Function(dynamic)? validator;
+
+  final ValueChanged<T?>? onChanged;
+  final String? Function(T?)? validator;
   final VoidCallback? onTap;
   final Color? backgroundColor;
   final Color? borderColor;
@@ -26,12 +48,14 @@ class DropdownInput<T> extends StatefulWidget {
 
   const DropdownInput({
     super.key,
-    required this.name,
+    this.name = "",
     this.hint = "",
     this.enabled = true,
     this.isRequired = false,
-    this.options = const [],
-    this.result,
+    this.items = const [],
+    @Deprecated('Используйте items вместо options') this.options = const [],
+    this.value,
+    @Deprecated('Используйте value вместо result') this.result,
     this.onChanged,
     this.validator,
     this.onTap,
@@ -54,133 +78,166 @@ class DropdownInput<T> extends StatefulWidget {
 }
 
 class _DropdownInputState<T> extends State<DropdownInput<T>> {
-  final t = InputVirtualKeyboard.theme;
-  bool _hasError = false;
-  dynamic _selectedValue;
+  VKTheme get t => InputVirtualKeyboard.theme;
+  String? _errorText;
+  T? _selectedValue;
+
+  List<DropdownEntry<T>> get _effectiveItems {
+    if (widget.items.isNotEmpty) return widget.items;
+    // ignore: deprecated_member_use_from_same_package
+    return widget.options
+        .map((o) => DropdownEntry<T>(o["index"] as T, '${o["value"]}'))
+        .toList();
+  }
+
+  // ignore: deprecated_member_use_from_same_package
+  T? get _widgetValue => widget.value ?? widget.result as T?;
 
   @override
   void initState() {
     super.initState();
-    _selectedValue = widget.result;
+    _selectedValue = _widgetValue;
   }
 
   @override
   void didUpdateWidget(covariant DropdownInput<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.result != oldWidget.result) {
-      _selectedValue = widget.result;
+    // ignore: deprecated_member_use_from_same_package
+    final oldValue = oldWidget.value ?? oldWidget.result as T?;
+    if (_widgetValue != oldValue) {
+      _selectedValue = _widgetValue;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasError = _errorText != null;
+    final items = _effectiveItems;
+
     return SizedBox(
       width: double.infinity,
-      child: Container(
-        decoration: BoxDecoration(
-          border: _hasError
-              ? Border.all(color: Colors.red)
-              : Border.all(
-                  width: 0, color: widget.borderColor ?? t.borderColor),
-          color: widget.backgroundColor ?? t.backgroundColor,
-          borderRadius: BorderRadius.circular(widget.borderRadius),
-        ),
-        child: Row(
-          children: [
-            if (widget.prefixWidget != null)
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(widget.borderRadius),
-                    bottomLeft: Radius.circular(widget.borderRadius),
-                  ),
-                  color: widget.prefixBackground ?? const Color(0xff1050BA),
-                ),
-                alignment: Alignment.center,
-                height: widget.minHeight ?? t.minHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: widget.prefixWidget,
-              ),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                alignment: Alignment.centerLeft,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: widget.minHeight ?? t.minHeight,
-                  ),
-                  child: Center(
-                    child: DropdownButtonFormField<dynamic>(
-                      initialValue: _selectedValue,
-                      isExpanded: true,
-                      icon: widget.icon ??
-                          const Icon(Icons.arrow_drop_down),
-                      decoration: InputDecoration(
-                        hintText: widget.hint,
-                        hintStyle: TextStyle(
-                          color: widget.hintColor ?? t.hintColor,
-                          fontSize: t.textSize,
-                        ),
-                        border: InputBorder.none,
-                        isCollapsed: true,
-                        contentPadding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              border: hasError
+                  ? Border.all(color: t.errorColor)
+                  : Border.all(
+                      width: 0, color: widget.borderColor ?? t.borderColor),
+              color: widget.backgroundColor ?? t.backgroundColor,
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+            ),
+            child: Row(
+              children: [
+                if (widget.prefixWidget != null)
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(widget.borderRadius),
+                        bottomLeft: Radius.circular(widget.borderRadius),
                       ),
-                      style: widget.style ??
-                          TextStyle(
-                            color: widget.textColor ?? t.textColor,
-                            fontSize: t.textSize,
+                      color: widget.prefixBackground ?? t.primaryColor,
+                    ),
+                    alignment: Alignment.center,
+                    height: widget.minHeight ?? t.minHeight,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: widget.prefixWidget,
+                  ),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    alignment: Alignment.centerLeft,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: widget.minHeight ?? t.minHeight,
+                      ),
+                      child: Center(
+                        child: DropdownButtonFormField<T>(
+                          initialValue: _selectedValue,
+                          isExpanded: true,
+                          icon: widget.icon ?? const Icon(Icons.arrow_drop_down),
+                          decoration: InputDecoration(
+                            hintText: widget.hint,
+                            hintStyle: TextStyle(
+                              color: widget.hintColor ?? t.hintColor,
+                              fontSize: t.textSize,
+                            ),
+                            border: InputBorder.none,
+                            isCollapsed: true,
+                            contentPadding: EdgeInsets.zero,
+                            errorStyle: const TextStyle(
+                              fontSize: 0.01,
+                              height: 0.01,
+                              color: Colors.transparent,
+                            ),
                           ),
-                      onTap: widget.onTap,
-                      items: widget.options.map((option) {
-                        return DropdownMenuItem<dynamic>(
-                          value: option["index"],
-                          child: Text(option["value"].toString()),
-                        );
-                      }).toList(),
-                      onChanged: widget.enabled
-                          ? (value) {
-                              setState(() => _selectedValue = value);
-                              widget.onChanged?.call(value);
+                          style: widget.style ??
+                              TextStyle(
+                                color: widget.textColor ?? t.textColor,
+                                fontSize: t.textSize,
+                              ),
+                          onTap: widget.onTap,
+                          items: items
+                              .map((entry) => DropdownMenuItem<T>(
+                                    value: entry.value,
+                                    child: Text(entry.label),
+                                  ))
+                              .toList(),
+                          onChanged: widget.enabled
+                              ? (value) {
+                                  setState(() => _selectedValue = value);
+                                  widget.onChanged?.call(value);
+                                }
+                              : null,
+                          validator: (value) {
+                            String? error;
+                            if (widget.isRequired && value == null) {
+                              error = 'Обязательное поле';
                             }
-                          : null,
-                      validator: (value) {
-                        String? error;
-                        if (widget.isRequired && value == null) {
-                          error = 'Обязательное поле';
-                        }
-                        error ??= widget.validator?.call(value);
-                        final showError = error != null;
-                        if (showError != _hasError) {
-                          WidgetsBinding.instance
-                              .addPostFrameCallback((_) {
-                            if (mounted) {
-                              setState(() => _hasError = showError);
+                            error ??= widget.validator?.call(value);
+                            if (error != _errorText) {
+                              WidgetsBinding.instance
+                                  .addPostFrameCallback((_) {
+                                if (mounted) {
+                                  setState(() => _errorText = error);
+                                }
+                              });
                             }
-                          });
-                        }
-                        return error;
-                      },
+                            return error;
+                          },
+                        ),
+                      ),
                     ),
                   ),
                 ),
+                if (widget.suffixWidget != null)
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(widget.borderRadius),
+                        bottomRight: Radius.circular(widget.borderRadius),
+                      ),
+                      color: widget.suffixBackground ?? t.primaryColor,
+                    ),
+                    alignment: Alignment.center,
+                    height: widget.minHeight ?? t.minHeight,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: widget.suffixWidget,
+                  ),
+              ],
+            ),
+          ),
+          if (hasError)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                _errorText!,
+                style: TextStyle(color: t.errorColor, fontSize: 12),
               ),
             ),
-            if (widget.suffixWidget != null)
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(widget.borderRadius),
-                    bottomRight: Radius.circular(widget.borderRadius),
-                  ),
-                  color: widget.suffixBackground ?? const Color(0xff1050BA),
-                ),
-                alignment: Alignment.center,
-                height: widget.minHeight ?? t.minHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: widget.suffixWidget,
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }

@@ -1,7 +1,14 @@
 name: input_virtual_keyboard
-description: A customizable virtual number keyboard widget for Flutter applications
-version: 0.0.1
-homepage: https://github.com/yourusername/input_virtual_keyboard
+description: Customizable virtual keyboard and input widgets for Flutter desktop applications (EN/RU/UZ layouts, floating or docked).
+version: 0.1.0
+repository: https://github.com/mostbyte/input_virtual_keyboard
+issue_tracker: https://github.com/mostbyte/input_virtual_keyboard/issues
+topics:
+  - keyboard
+  - virtual-keyboard
+  - desktop
+  - input
+  - form
 
 environment:
   sdk: ^3.11.0
@@ -10,7 +17,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_form_builder: ^10.3.0+2
 
 dev_dependencies:
   flutter_test:

@@ -1,75 +1,112 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
-
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
-
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
-
 # Input Virtual Keyboard
 
-A Flutter package that provides a customizable virtual keyboard with multiple language support.
+[Русская версия](https://github.com/mostbyte/input_virtual_keyboard/blob/master/README.ru.md)
+
+A customizable on-screen virtual keyboard and a set of ready-made input widgets for Flutter desktop applications (POS terminals, kiosks, dashboards). On Android/iOS the virtual keyboard is disabled automatically and the system keyboard is used instead.
 
 ## Features
 
-- Custom virtual keyboard with English and Russian language support
-- Floating keyboard overlay
-- Active/Passive keyboard state indicators
-- Shift key functionality for special characters
-- Arrow key navigation
-- Backspace and submit buttons
+- **Full keyboard** with EN / RU / Uzbek-Latin / Uzbek-Cyrillic layouts and support for custom layouts
+- **Numeric keyboard** with a `00` key, configurable decimal separator and a phone mode (`+`)
+- **Smart Shift**: one-shot (resets after one character), Caps Lock on double-tap
+- **Long press**: backspace auto-repeat; alternative characters (`е` → `ё`, `o` → `oʻ`, `g` → `gʻ`)
+- **Quick keys** for email fields: `@`, `.com`, `.uz`, `.ru`
+- **PIN mode** for password fields: numeric keyboard with optional digit shuffling
+- **Floating** (draggable, clamped to screen bounds) or **docked** (pinned to the bottom edge) keyboard
+- Optional auto-show on focus
+- Remembers the last layout and the dragged keyboard position within a session
+- Show/hide animation
+- Ready-made fields: `TextInput`, `NumberInput`, `TextAreaInput`, `PhoneInput` (+998 mask), `SearchInput`, `PasswordInput`, `DropdownInput<T>`
+- Validation with an error message below the field, theming via `VKTheme`
 
-## Getting Started
+## Quick start
 
-1. Add the package to your pubspec.yaml:
-
-```yaml
-dependencies:
-  input_virtual_keyboard: ^0.0.1
+```dart
+// main.dart — init is optional; sane defaults apply without it
+await InputVirtualKeyboard.init(
+  theme: const VKTheme(minHeight: 44, textSize: 15),
+  autoShowOnFocus: true,                // open the keyboard on focus
+  placement: VKPlacement.floating,      // or VKPlacement.docked
+  layouts: KeyboardLayout.all,          // EN / RU / UZ-Latin / UZ-Cyrillic
+  decimalSeparator: ',',
+);
+runApp(const MyApp());
 ```
-
-2. Add the keyboard icons to your assets:
-
-Create an `assets` directory in your package and add two icons:
-- `active_keyboard.png`: The keyboard icon when the virtual keyboard is active
-- `passive_keyboard.png`: The keyboard icon when the virtual keyboard is inactive
-
-The recommended size for the keyboard icons is 24x24 pixels.
-
-## Usage
 
 ```dart
 TextInput(
-  name: 'my_input',
-  hint: 'Enter text',
-  useCustomKeyboard: true, // Enable/disable custom keyboard
-  nextAction: true, // Show next action button
+  name: 'title',
+  hint: 'Title',
+  isRequired: true,
+  onChanged: (v) => print(v),
+)
+
+PasswordInput(
+  name: 'pin',
+  hint: 'PIN code',
+  pinMode: true,       // numeric keyboard, digits only
+  shufflePin: true,    // shuffle digits (shoulder-surfing protection)
+  maxLength: 4,
+)
+
+DropdownInput<int>(
+  name: 'branch',
+  hint: 'Branch',
+  items: const [
+    DropdownEntry(1, 'Branch #1'),
+    DropdownEntry(2, 'Warehouse'),
+  ],
+  onChanged: (id) => print(id),
 )
 ```
 
-## Keyboard Icons
+## Custom layout
 
-Place the following files in your assets directory:
+```dart
+const kazakh = KeyboardLayout(
+  code: 'ҚЗ',
+  name: 'Қазақша',
+  rows: [
+    ['й', 'ц', 'у', 'к', 'е', 'н', 'г', 'ш', 'щ', 'з', 'х'],
+    ['ф', 'ы', 'в', 'а', 'п', 'р', 'о', 'л', 'д', 'ж', 'э'],
+    ['я', 'ч', 'с', 'м', 'и', 'т', 'ь', 'б', 'ю'],
+  ],
+  longPressAlternatives: {'к': 'қ', 'г': 'ғ', 'у': 'ұ'},
+);
 
-1. active_keyboard.png:
-   - Size: 24x24 pixels
-   - Color: #2196F3 (Blue)
-   - Description: Keyboard icon with a filled/solid style
+await InputVirtualKeyboard.init(
+  layouts: [KeyboardLayout.russian, kazakh],
+);
+```
 
-2. passive_keyboard.png:
-   - Size: 24x24 pixels
-   - Color: #9E9E9E (Grey)
-   - Description: Keyboard icon with an outline style
+## Keyboard selection by field type
 
-You can use any keyboard icon design that matches your app's theme, but make sure to maintain the naming convention and place them in the assets directory.
+| `textInputType` | Keyboard                                  |
+| --------------- | ----------------------------------------- |
+| `number`        | Numeric (`00`, decimal separator)         |
+| `phone`         | Numeric with `+`                          |
+| `emailAddress`  | Full + quick keys `@`/`.com`/…            |
+| everything else | Full                                      |
 
-## Additional information
+## Standalone keyboards
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+`FullKeyboard` and `NumberKeyboard` can be embedded directly (e.g. a custom PIN pad) without the overlay. Use the public editing handlers so formatters and surrogate pairs are handled correctly:
+
+```dart
+FullKeyboard(
+  onKeyPressed: (text) =>
+      KeyboardOverlay.handleKeyPressed(text, controller, const []),
+  onBackspace: () => KeyboardOverlay.handleBackspace(controller, const []),
+  onSubmit: () => print(controller.text),
+)
+```
+
+## Theming
+
+All key colors and sizes are configurable via `VKTheme`: `keyboardBackground`, `keyBackground`, `keyTextColor`, `submitKeyBackground`, `keyWidth`/`keyHeight`/`keySpacing`, etc.
+
+## Tests
+
+```bash
+flutter test
+```
