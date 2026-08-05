@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:input_virtual_keyboard/input_virtual_keyboard.dart';
+import 'package:desktop_virtual_keyboard/desktop_virtual_keyboard.dart';
 
 void main() {
   group('KeyboardOverlay.handleKeyPressed', () {

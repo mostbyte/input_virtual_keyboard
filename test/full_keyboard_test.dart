@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:input_virtual_keyboard/input_virtual_keyboard.dart';
+import 'package:desktop_virtual_keyboard/desktop_virtual_keyboard.dart';
 
 Widget _wrap(Widget child) {
   return MaterialApp(
@@ -16,8 +16,8 @@ Widget _wrap(Widget child) {
 void main() {
   setUp(() {
     // Не тащим состояние раскладки между тестами.
-    InputVirtualKeyboard.rememberLayout = false;
-    InputVirtualKeyboard.layouts = KeyboardLayout.defaults;
+    DesktopVirtualKeyboard.rememberLayout = false;
+    DesktopVirtualKeyboard.layouts = KeyboardLayout.defaults;
   });
 
   group('FullKeyboard', () {

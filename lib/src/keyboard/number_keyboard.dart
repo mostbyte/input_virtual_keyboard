@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:input_virtual_keyboard/input_virtual_keyboard.dart';
+import 'package:desktop_virtual_keyboard/desktop_virtual_keyboard.dart';
 
 class NumberKeyboard extends StatefulWidget {
   const NumberKeyboard({
@@ -20,7 +20,7 @@ class NumberKeyboard extends StatefulWidget {
   final VoidCallback onBackspace;
   final VoidCallback onSubmit;
 
-  /// Десятичный разделитель. По умолчанию — из [InputVirtualKeyboard].
+  /// Десятичный разделитель. По умолчанию — из [DesktopVirtualKeyboard].
   final String? decimalSeparator;
 
   /// Показывать клавишу десятичного разделителя.
@@ -40,7 +40,7 @@ class NumberKeyboard extends StatefulWidget {
 }
 
 class _NumberKeyboardState extends State<NumberKeyboard> {
-  VKTheme get t => InputVirtualKeyboard.theme;
+  VKTheme get t => DesktopVirtualKeyboard.theme;
 
   late final List<String> _digits;
 
@@ -54,7 +54,7 @@ class _NumberKeyboardState extends State<NumberKeyboard> {
   }
 
   String get _separator =>
-      widget.decimalSeparator ?? InputVirtualKeyboard.decimalSeparator;
+      widget.decimalSeparator ?? DesktopVirtualKeyboard.decimalSeparator;
 
   Widget _buildKey(String text, {Color? backgroundColor, Color? textColor}) {
     return Padding(

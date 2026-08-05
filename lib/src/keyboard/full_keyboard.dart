@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:input_virtual_keyboard/input_virtual_keyboard.dart';
+import 'package:desktop_virtual_keyboard/desktop_virtual_keyboard.dart';
 
 /// Состояние клавиши Shift.
 enum ShiftState {
@@ -35,7 +35,7 @@ class FullKeyboard extends StatefulWidget {
   final VoidCallback? onLeftArrow;
   final VoidCallback? onRightArrow;
 
-  /// Раскладки. По умолчанию — [InputVirtualKeyboard.layouts].
+  /// Раскладки. По умолчанию — [DesktopVirtualKeyboard.layouts].
   final List<KeyboardLayout>? layouts;
 
   /// Код начальной раскладки. По умолчанию — последняя использованная.
@@ -55,7 +55,7 @@ class _FullKeyboardState extends State<FullKeyboard> {
   /// Последняя выбранная раскладка — живёт, пока живо приложение.
   static String? _sessionLayoutCode;
 
-  VKTheme get t => InputVirtualKeyboard.theme;
+  VKTheme get t => DesktopVirtualKeyboard.theme;
 
   late List<KeyboardLayout> _layouts;
   late KeyboardLayout _layout;
@@ -73,12 +73,12 @@ class _FullKeyboardState extends State<FullKeyboard> {
   @override
   void initState() {
     super.initState();
-    _layouts = widget.layouts ?? InputVirtualKeyboard.layouts;
+    _layouts = widget.layouts ?? DesktopVirtualKeyboard.layouts;
     if (_layouts.isEmpty) {
       _layouts = const [KeyboardLayout.english];
     }
     final preferredCode = widget.initialLayoutCode ??
-        (InputVirtualKeyboard.rememberLayout ? _sessionLayoutCode : null);
+        (DesktopVirtualKeyboard.rememberLayout ? _sessionLayoutCode : null);
     _layout = _layouts.firstWhere(
       (l) => l.code == preferredCode,
       orElse: () => _layouts.first,
@@ -126,7 +126,7 @@ class _FullKeyboardState extends State<FullKeyboard> {
     setState(() {
       _layout = _layouts[(index + 1) % _layouts.length];
     });
-    if (InputVirtualKeyboard.rememberLayout) {
+    if (DesktopVirtualKeyboard.rememberLayout) {
       _sessionLayoutCode = _layout.code;
     }
     widget.onLayoutChanged?.call(_layout);

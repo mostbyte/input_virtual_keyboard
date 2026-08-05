@@ -1,7 +1,7 @@
 library;
 
-import 'package:input_virtual_keyboard/src/keyboard/keyboard_layout.dart';
-import 'package:input_virtual_keyboard/virtual_keyboard_theme.dart';
+import 'package:desktop_virtual_keyboard/src/keyboard/keyboard_layout.dart';
+import 'package:desktop_virtual_keyboard/virtual_keyboard_theme.dart';
 
 export 'virtual_keyboard_theme.dart';
 export 'src/keyboard/keyboard_layout.dart';
@@ -22,8 +22,8 @@ export 'src/utils/phone_masked_input.dart';
 /// Глобальная конфигурация пакета.
 ///
 /// Вызов [init] опционален — без него используются значения по умолчанию.
-class InputVirtualKeyboard {
-  InputVirtualKeyboard._();
+class DesktopVirtualKeyboard {
+  DesktopVirtualKeyboard._();
 
   static VKTheme _theme = const VKTheme();
   static VKTheme get theme => _theme;
@@ -62,13 +62,13 @@ class InputVirtualKeyboard {
     bool rememberPosition = true,
   }) async {
     _theme = theme ?? const VKTheme();
-    InputVirtualKeyboard.useCustomKeyboard = useCustomKeyboard;
-    InputVirtualKeyboard.autoShowOnFocus = autoShowOnFocus;
-    InputVirtualKeyboard.placement = placement;
-    InputVirtualKeyboard.layouts =
+    DesktopVirtualKeyboard.useCustomKeyboard = useCustomKeyboard;
+    DesktopVirtualKeyboard.autoShowOnFocus = autoShowOnFocus;
+    DesktopVirtualKeyboard.placement = placement;
+    DesktopVirtualKeyboard.layouts =
         (layouts == null || layouts.isEmpty) ? KeyboardLayout.defaults : layouts;
-    InputVirtualKeyboard.decimalSeparator = decimalSeparator;
-    InputVirtualKeyboard.rememberLayout = rememberLayout;
-    InputVirtualKeyboard.rememberPosition = rememberPosition;
+    DesktopVirtualKeyboard.decimalSeparator = decimalSeparator;
+    DesktopVirtualKeyboard.rememberLayout = rememberLayout;
+    DesktopVirtualKeyboard.rememberPosition = rememberPosition;
   }
 }

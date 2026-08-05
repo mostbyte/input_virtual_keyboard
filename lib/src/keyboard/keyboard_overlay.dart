@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:input_virtual_keyboard/input_virtual_keyboard.dart';
+import 'package:desktop_virtual_keyboard/desktop_virtual_keyboard.dart';
 
 typedef KeyboardVisibilityChanged = void Function(bool isVisible);
 
@@ -96,8 +96,8 @@ class KeyboardOverlay {
         anchor: anchorOffset,
         anchorSize: anchorSize,
         initialPosition:
-            InputVirtualKeyboard.rememberPosition ? _savedPosition : null,
-        placement: InputVirtualKeyboard.placement,
+            DesktopVirtualKeyboard.rememberPosition ? _savedPosition : null,
+        placement: DesktopVirtualKeyboard.placement,
         focusNode: focusNode,
         onDragEnd: (position) => _savedPosition = position,
         keyboard: _buildKeyboardFor(
@@ -461,7 +461,7 @@ class _KeyboardShellState extends State<_KeyboardShell>
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(15),
                     border: Border.all(
-                      color: InputVirtualKeyboard.theme.primaryColor,
+                      color: DesktopVirtualKeyboard.theme.primaryColor,
                     ),
                     color: Colors.white,
                   ),

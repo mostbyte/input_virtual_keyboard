@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:input_virtual_keyboard/input_virtual_keyboard.dart';
+import 'package:desktop_virtual_keyboard/desktop_virtual_keyboard.dart';
 
 /// Типизированный элемент выпадающего списка.
 class DropdownEntry<T> {
@@ -78,7 +78,7 @@ class DropdownInput<T> extends StatefulWidget {
 }
 
 class _DropdownInputState<T> extends State<DropdownInput<T>> {
-  VKTheme get t => InputVirtualKeyboard.theme;
+  VKTheme get t => DesktopVirtualKeyboard.theme;
   String? _errorText;
   T? _selectedValue;
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:input_virtual_keyboard/src/inputs/input.dart';
-import 'package:input_virtual_keyboard/src/utils/phone_masked_input.dart';
+import 'package:desktop_virtual_keyboard/src/inputs/input.dart';
+import 'package:desktop_virtual_keyboard/src/utils/phone_masked_input.dart';
 
 class PhoneInput extends Input {
   const PhoneInput({

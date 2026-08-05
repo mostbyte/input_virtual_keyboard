@@ -1,5 +1,5 @@
 import 'package:flutter/services.dart';
-import 'package:input_virtual_keyboard/src/inputs/input.dart';
+import 'package:desktop_virtual_keyboard/src/inputs/input.dart';
 
 class PasswordInput extends Input {
   PasswordInput({

@@ -1,6 +1,6 @@
-# Input Virtual Keyboard
+# Desktop Virtual Keyboard
 
-[Русская версия](https://github.com/mostbyte/input_virtual_keyboard/blob/master/README.ru.md)
+[Русская версия](https://github.com/mostbyte/desktop_virtual_keyboard/blob/master/README.ru.md)
 
 A customizable on-screen virtual keyboard and a set of ready-made input widgets for Flutter desktop applications (POS terminals, kiosks, dashboards). On Android/iOS the virtual keyboard is disabled automatically and the system keyboard is used instead.
 
@@ -23,7 +23,7 @@ A customizable on-screen virtual keyboard and a set of ready-made input widgets 
 
 ```dart
 // main.dart — init is optional; sane defaults apply without it
-await InputVirtualKeyboard.init(
+await DesktopVirtualKeyboard.init(
   theme: const VKTheme(minHeight: 44, textSize: 15),
   autoShowOnFocus: true,                // open the keyboard on focus
   placement: VKPlacement.floating,      // or VKPlacement.docked
@@ -74,7 +74,7 @@ const kazakh = KeyboardLayout(
   longPressAlternatives: {'к': 'қ', 'г': 'ғ', 'у': 'ұ'},
 );
 
-await InputVirtualKeyboard.init(
+await DesktopVirtualKeyboard.init(
   layouts: [KeyboardLayout.russian, kazakh],
 );
 ```

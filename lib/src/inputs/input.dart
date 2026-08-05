@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:input_virtual_keyboard/input_virtual_keyboard.dart';
+import 'package:desktop_virtual_keyboard/desktop_virtual_keyboard.dart';
 
 class Input extends StatefulWidget {
   final TextEditingController? controller;
@@ -22,7 +22,7 @@ class Input extends StatefulWidget {
   final bool? useCustomKeyboard;
 
   /// Открывать клавиатуру автоматически при фокусе.
-  /// null — глобальная настройка [InputVirtualKeyboard.autoShowOnFocus].
+  /// null — глобальная настройка [DesktopVirtualKeyboard.autoShowOnFocus].
   final bool? autoShowKeyboard;
   final Widget? icon;
   final TextStyle? style;
@@ -104,7 +104,7 @@ class Input extends StatefulWidget {
 }
 
 class _InputState extends State<Input> {
-  VKTheme get t => InputVirtualKeyboard.theme;
+  VKTheme get t => DesktopVirtualKeyboard.theme;
   late final TextEditingController _controller = widget.controller ??
       TextEditingController(text: widget.initialValue);
   late final FocusNode _focusNode = widget.focusNode ?? FocusNode();
@@ -116,7 +116,7 @@ class _InputState extends State<Input> {
   late bool _useCustomKeyboard;
 
   bool get _autoShow =>
-      widget.autoShowKeyboard ?? InputVirtualKeyboard.autoShowOnFocus;
+      widget.autoShowKeyboard ?? DesktopVirtualKeyboard.autoShowOnFocus;
 
   List<TextInputFormatter> get _effectiveFormatters => [
         if (widget.maxLength != null)
@@ -133,7 +133,7 @@ class _InputState extends State<Input> {
       _useCustomKeyboard = false;
     } else {
       _useCustomKeyboard =
-          widget.useCustomKeyboard ?? InputVirtualKeyboard.useCustomKeyboard;
+          widget.useCustomKeyboard ?? DesktopVirtualKeyboard.useCustomKeyboard;
     }
 
     _focusNode.addListener(_handleFocusChange);
@@ -246,7 +246,7 @@ class _InputState extends State<Input> {
         child: Image.asset(
           _obscured ? "assets/eye_close.png" : "assets/eye.png",
           color: _obscured ? const Color(0xff9C9AA5) : t.primaryColor,
-          package: 'input_virtual_keyboard',
+          package: 'desktop_virtual_keyboard',
         ),
       ),
     );
@@ -266,7 +266,7 @@ class _InputState extends State<Input> {
             ),
             child: Image.asset(
               "assets/search.png",
-              package: 'input_virtual_keyboard',
+              package: 'desktop_virtual_keyboard',
               width: 9,
               height: 9,
             ),
@@ -286,7 +286,7 @@ class _InputState extends State<Input> {
             ),
             child: Image.asset(
               "assets/close.png",
-              package: 'input_virtual_keyboard',
+              package: 'desktop_virtual_keyboard',
               width: 9,
               height: 9,
             ),
@@ -329,7 +329,7 @@ class _InputState extends State<Input> {
                           _isKeyboardVisible
                               ? "assets/active_keyboard.png"
                               : "assets/passive_keyboard.png",
-                          package: 'input_virtual_keyboard',
+                          package: 'desktop_virtual_keyboard',
                           width: 24,
                           height: 24,
                         ),

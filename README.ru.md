@@ -1,4 +1,4 @@
-# Input Virtual Keyboard
+# Desktop Virtual Keyboard
 
 Кастомизируемая виртуальная клавиатура и набор готовых полей ввода для Flutter-приложений на десктопе (POS-терминалы, киоски, дашборды). На Android/iOS виртуальная клавиатура автоматически отключается — используется системная.
 
@@ -21,7 +21,7 @@
 
 ```dart
 // main.dart — init опционален, без него используются значения по умолчанию
-await InputVirtualKeyboard.init(
+await DesktopVirtualKeyboard.init(
   theme: const VKTheme(minHeight: 44, textSize: 15),
   autoShowOnFocus: true,                // открывать клавиатуру при фокусе
   placement: VKPlacement.floating,      // или VKPlacement.docked
@@ -72,7 +72,7 @@ const kazakh = KeyboardLayout(
   longPressAlternatives: {'к': 'қ', 'г': 'ғ', 'у': 'ұ'},
 );
 
-await InputVirtualKeyboard.init(
+await DesktopVirtualKeyboard.init(
   layouts: [KeyboardLayout.russian, kazakh],
 );
 ```

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:input_virtual_keyboard/input_virtual_keyboard.dart';
+import 'package:desktop_virtual_keyboard/desktop_virtual_keyboard.dart';
 
 /// Пример собственной раскладки — казахская на базе ЙЦУКЕН.
 const kazakhLayout = KeyboardLayout(
@@ -14,7 +14,7 @@ const kazakhLayout = KeyboardLayout(
 );
 
 void main() async {
-  await InputVirtualKeyboard.init(
+  await DesktopVirtualKeyboard.init(
     theme: const VKTheme(minHeight: 40, textSize: 15),
     useCustomKeyboard: true,
     autoShowOnFocus: false,
@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Input Virtual Keyboard — все кейсы',
+      title: 'Desktop Virtual Keyboard — все кейсы',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
@@ -96,7 +96,7 @@ class _DemoPageState extends State<DemoPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Input Virtual Keyboard — все кейсы'),
+        title: const Text('Desktop Virtual Keyboard — все кейсы'),
       ),
       body: Center(
         child: ConstrainedBox(
@@ -114,7 +114,7 @@ class _DemoPageState extends State<DemoPage> {
                     value: _autoShow,
                     onChanged: (v) {
                       setState(() => _autoShow = v);
-                      InputVirtualKeyboard.autoShowOnFocus = v;
+                      DesktopVirtualKeyboard.autoShowOnFocus = v;
                     },
                   ),
                   SwitchListTile(
@@ -123,7 +123,7 @@ class _DemoPageState extends State<DemoPage> {
                     value: _docked,
                     onChanged: (v) {
                       setState(() => _docked = v);
-                      InputVirtualKeyboard.placement =
+                      DesktopVirtualKeyboard.placement =
                           v ? VKPlacement.docked : VKPlacement.floating;
                     },
                   ),
@@ -133,7 +133,7 @@ class _DemoPageState extends State<DemoPage> {
                     value: _commaSeparator,
                     onChanged: (v) {
                       setState(() => _commaSeparator = v);
-                      InputVirtualKeyboard.decimalSeparator = v ? ',' : '.';
+                      DesktopVirtualKeyboard.decimalSeparator = v ? ',' : '.';
                     },
                   ),
                   SwitchListTile(
@@ -143,7 +143,7 @@ class _DemoPageState extends State<DemoPage> {
                     value: _withKazakh,
                     onChanged: (v) {
                       setState(() => _withKazakh = v);
-                      InputVirtualKeyboard.layouts = v
+                      DesktopVirtualKeyboard.layouts = v
                           ? [...KeyboardLayout.all, kazakhLayout]
                           : KeyboardLayout.all;
                     },

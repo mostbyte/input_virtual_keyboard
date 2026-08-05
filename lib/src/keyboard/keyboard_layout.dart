@@ -2,7 +2,7 @@
 ///
 /// Раскладка — это просто данные: три ряда символов плюс карта альтернативных
 /// символов, которые вводятся долгим нажатием (например `е` → `ё`).
-/// Свои раскладки можно передать в [InputVirtualKeyboard.init] или напрямую
+/// Свои раскладки можно передать в [DesktopVirtualKeyboard.init] или напрямую
 /// в `FullKeyboard(layouts: ...)`.
 class KeyboardLayout {
   const KeyboardLayout({

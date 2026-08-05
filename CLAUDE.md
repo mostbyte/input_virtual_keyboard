@@ -25,7 +25,7 @@ This is a Flutter package providing customizable virtual keyboard widgets for de
 ## Architecture
 
 ### Library Entry Point
-[input_virtual_keyboard.dart](lib/input_virtual_keyboard.dart) - Exports all public APIs and holds global config (`InputVirtualKeyboard`): theme, `autoShowOnFocus`, `placement` (floating/docked), `layouts`, `decimalSeparator`, session memory flags. `init()` is optional — sane defaults apply without it.
+[desktop_virtual_keyboard.dart](lib/desktop_virtual_keyboard.dart) - Exports all public APIs and holds global config (`DesktopVirtualKeyboard`): theme, `autoShowOnFocus`, `placement` (floating/docked), `layouts`, `decimalSeparator`, session memory flags. `init()` is optional — sane defaults apply without it.
 
 ### Keyboard Types
 - **FullKeyboard** ([full_keyboard.dart](lib/src/keyboard/full_keyboard.dart)): letter keyboard driven by `KeyboardLayout` data ([keyboard_layout.dart](lib/src/keyboard/keyboard_layout.dart) — EN/RU/UZ-latin/UZ-cyrillic presets + custom layouts). One-shot shift, caps lock on double-tap, long-press alternatives (`е`→`ё`, `o`→`oʻ`), backspace auto-repeat, optional quick keys row (email: `@`/`.com`/…), number/symbol mode toggle. Remembers last layout per session (static).
@@ -54,7 +54,7 @@ Key behaviors:
 
 ```dart
 // main.dart (optional)
-await InputVirtualKeyboard.init(
+await DesktopVirtualKeyboard.init(
   theme: const VKTheme(),
   autoShowOnFocus: true,
   layouts: KeyboardLayout.all,
@@ -68,5 +68,5 @@ DropdownInput<int>(name: 'x', items: [DropdownEntry(1, 'One')])
 
 ## Gotchas
 
-- `FullKeyboard._sessionLayoutCode` is static session state — reset `InputVirtualKeyboard.rememberLayout = false` in widget tests.
-- Keyboard icon assets ship with the package (`package: 'input_virtual_keyboard'`); consumers don't add them.
+- `FullKeyboard._sessionLayoutCode` is static session state — reset `DesktopVirtualKeyboard.rememberLayout = false` in widget tests.
+- Keyboard icon assets ship with the package (`package: 'desktop_virtual_keyboard'`); consumers don't add them.
