@@ -298,8 +298,10 @@ class _InputState extends State<Input> {
 
   Widget? get _effectiveSuffixIcon {
     if (widget.showPasswordToggle) return _buildPasswordToggle();
+    // Явно переданный suffixIcon важнее встроенного поискового аффикса.
+    if (widget.suffixIcon != null) return widget.suffixIcon;
     if (widget.showSearchAffix) return _buildSearchAffix();
-    return widget.suffixIcon;
+    return null;
   }
 
   @override

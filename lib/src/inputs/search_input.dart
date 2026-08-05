@@ -33,6 +33,9 @@ class SearchInput extends Input {
     super.prefixBackground,
     super.suffixWidget,
     super.suffixBackground,
+
+    /// Свой суффикс вместо встроенного (лупа/крестик очистки).
+    super.suffixIcon,
   }) : super(
           textInputType: TextInputType.text,
           showSearchAffix: true,

@@ -1,6 +1,6 @@
 name: desktop_virtual_keyboard
 description: Customizable virtual keyboard and input widgets for Flutter desktop applications (EN/RU/UZ layouts, floating or docked).
-version: 0.1.1
+version: 0.1.2
 repository: https://github.com/mostbyte/desktop_virtual_keyboard
 issue_tracker: https://github.com/mostbyte/desktop_virtual_keyboard/issues
 topics:
