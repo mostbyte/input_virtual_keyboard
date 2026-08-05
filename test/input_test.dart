@@ -163,5 +163,24 @@ void main() {
       await tester.pumpAndSettle();
       expect(_visibleError('Обязательное поле'), findsOneWidget);
     });
+
+    testWidgets('легаси options: null-значение не падает при T=Object',
+        (tester) async {
+      // Регрессия: `null as T` для ненулевого выведенного T кидал _TypeError.
+      await tester.pumpWidget(_wrap(
+        // ignore: deprecated_member_use
+        const DropdownInput<Object>(
+          name: 'dd',
+          // ignore: deprecated_member_use
+          options: [
+            {'index': null, 'value': 'Не выбрано'},
+            {'index': 1, 'value': 'Один'},
+          ],
+        ),
+      ));
+
+      expect(find.text('Не выбрано'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 }

@@ -82,11 +82,19 @@ class _DropdownInputState<T> extends State<DropdownInput<T>> {
   String? _errorText;
   T? _selectedValue;
 
-  List<DropdownEntry<T>> get _effectiveItems {
-    if (widget.items.isNotEmpty) return widget.items;
+  List<DropdownMenuItem<T>> get _menuItems {
+    if (widget.items.isNotEmpty) {
+      return widget.items
+          .map((e) => DropdownMenuItem<T>(value: e.value, child: Text(e.label)))
+          .toList();
+    }
+    // Легаси-формат: значение "index" может быть null, поэтому приводим
+    // к nullable T? (DropdownMenuItem.value и так nullable) — иначе
+    // `null as Object` падает при выведенном ненулевом T.
     // ignore: deprecated_member_use_from_same_package
     return widget.options
-        .map((o) => DropdownEntry<T>(o["index"] as T, '${o["value"]}'))
+        .map((o) =>
+            DropdownMenuItem<T>(value: o["index"] as T?, child: Text('${o["value"]}')))
         .toList();
   }
 
@@ -112,7 +120,6 @@ class _DropdownInputState<T> extends State<DropdownInput<T>> {
   @override
   Widget build(BuildContext context) {
     final hasError = _errorText != null;
-    final items = _effectiveItems;
 
     return SizedBox(
       width: double.infinity,
@@ -180,12 +187,7 @@ class _DropdownInputState<T> extends State<DropdownInput<T>> {
                                 fontSize: t.textSize,
                               ),
                           onTap: widget.onTap,
-                          items: items
-                              .map((entry) => DropdownMenuItem<T>(
-                                    value: entry.value,
-                                    child: Text(entry.label),
-                                  ))
-                              .toList(),
+                          items: _menuItems,
                           onChanged: widget.enabled
                               ? (value) {
                                   setState(() => _selectedValue = value);
