@@ -340,7 +340,8 @@ class _InputState extends State<Input> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    border: hasError
+                    border: hasError ||
+                            (widget.isRequired && t.highlightRequiredBorder)
                         ? Border.all(color: t.errorColor)
                         : Border.all(
                             width: 0,

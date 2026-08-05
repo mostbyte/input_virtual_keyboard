@@ -122,10 +122,11 @@ class _DropdownInputState<T> extends State<DropdownInput<T>> {
         children: [
           Container(
             decoration: BoxDecoration(
-              border: hasError
-                  ? Border.all(color: t.errorColor)
-                  : Border.all(
-                      width: 0, color: widget.borderColor ?? t.borderColor),
+              border:
+                  hasError || (widget.isRequired && t.highlightRequiredBorder)
+                      ? Border.all(color: t.errorColor)
+                      : Border.all(
+                          width: 0, color: widget.borderColor ?? t.borderColor),
               color: widget.backgroundColor ?? t.backgroundColor,
               borderRadius: BorderRadius.circular(widget.borderRadius),
             ),

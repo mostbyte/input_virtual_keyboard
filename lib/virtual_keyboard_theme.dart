@@ -19,6 +19,7 @@ class VKTheme {
     this.errorColor = const Color(0xFFD32F2F),
     this.minHeight = 50,
     this.textSize = 14,
+    this.highlightRequiredBorder = false,
     // ----- клавиатура -----
     this.keyboardBackground = const Color(0xFF1A1B1E),
     this.keyBackground = const Color(0xFF2D2F33),
@@ -45,6 +46,10 @@ class VKTheme {
   final Color errorColor;
   final double minHeight;
   final double textSize;
+
+  /// Всегда подсвечивать обязательные поля (isRequired) рамкой цвета ошибки,
+  /// а не только при ошибке валидации.
+  final bool highlightRequiredBorder;
 
   /// Фон панели клавиатуры.
   final Color keyboardBackground;
